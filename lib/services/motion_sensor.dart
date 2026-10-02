@@ -29,13 +29,16 @@ class MotionSensor {
   int _peaks = 0;
   int _lastShake = 0;
 
+  @visibleForTesting
+  int Function() now = () => DateTime.now().millisecondsSinceEpoch;
+
   void start() {
     _accel ??= accelerometerEventStream(
       samplingPeriod: SensorInterval.gameInterval,
-    ).listen(_onAccel, onError: (Object _) {});
+    ).listen(onAccel, onError: (Object _) {});
     _user ??= userAccelerometerEventStream(
       samplingPeriod: SensorInterval.gameInterval,
-    ).listen(_onUser, onError: (Object _) {});
+    ).listen(onUser, onError: (Object _) {});
   }
 
   void stop() {
@@ -45,7 +48,8 @@ class MotionSensor {
     _user = null;
   }
 
-  void _onAccel(AccelerometerEvent e) {
+  @visibleForTesting
+  void onAccel(AccelerometerEvent e) {
     if (!_primed) {
       _fx = e.x;
       _fy = e.y;
@@ -59,11 +63,12 @@ class MotionSensor {
   }
 
   /// Three strong jolts within 0.9 s count as a shake.
-  void _onUser(UserAccelerometerEvent e) {
+  @visibleForTesting
+  void onUser(UserAccelerometerEvent e) {
     final magnitude = math.sqrt(e.x * e.x + e.y * e.y + e.z * e.z);
     if (magnitude < 15) return;
 
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final now = this.now();
     if (now - _lastPeak < 110) return;
     if (now - _firstPeak > 900) {
       _firstPeak = now;
