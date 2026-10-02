@@ -64,6 +64,20 @@ class Palette {
       Theme.of(context).brightness == Brightness.dark ? dark : light;
 }
 
+const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+String formatDay(DateTime d) => '${_weekdays[d.weekday - 1]}, ${d.day} ${_months[d.month - 1]}';
+
+/// "Due today", "Overdue 2 days", "Due Fri, 3 Oct".
+String dueLabel(int days, DateTime due) => switch (days) {
+      0 => 'Due today',
+      1 => 'Due tomorrow',
+      -1 => 'Overdue 1 day',
+      < 0 => 'Overdue ${-days} days',
+      _ => 'Due ${formatDay(due)}',
+    };
+
 const kFontFamily = 'Bricolage';
 const kTaskFontSize = 17.0;
 

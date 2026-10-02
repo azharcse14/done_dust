@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../state/todo_store.dart';
 import '../theme.dart';
-
-const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-String _formatDay(DateTime d) => '${_weekdays[d.weekday - 1]}, ${d.day} ${_months[d.month - 1]}';
 
 Future<void> showArchiveSheet(BuildContext context, TodoStore store) {
   return showModalBottomSheet<void>(
@@ -26,11 +22,20 @@ Future<void> showArchiveSheet(BuildContext context, TodoStore store) {
   );
 }
 
-class _ArchiveList extends StatelessWidget {
+class _ArchiveList extends StatefulWidget {
   const _ArchiveList({required this.store, required this.controller});
 
   final TodoStore store;
   final ScrollController controller;
+
+  @override
+  State<_ArchiveList> createState() => _ArchiveListState();
+}
+
+class _ArchiveListState extends State<_ArchiveList> {
+  String _query = '';
+
+  TodoStore get store => widget.store;
 
   Future<void> _confirmClear(BuildContext context) async {
     final ok = await showDialog<bool>(
@@ -50,7 +55,9 @@ class _ArchiveList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Palette.of(context);
-    final items = store.archived;
+    final all = store.archived;
+    final q = _query.toLowerCase();
+    final items = q.isEmpty ? all : all.where((t) => t.text.toLowerCase().contains(q)).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -70,7 +77,7 @@ class _ArchiveList extends StatelessWidget {
                   ),
                 ),
               ),
-              if (items.isNotEmpty)
+              if (all.isNotEmpty)
                 TextButton(
                   onPressed: () => _confirmClear(context),
                   child: const Text('Clear archive'),
@@ -78,25 +85,45 @@ class _ArchiveList extends StatelessWidget {
             ],
           ),
         ),
+        if (all.length > 5)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: TextField(
+              onChanged: (v) => setState(() => _query = v.trim()),
+              decoration: InputDecoration(
+                hintText: 'Search archive',
+                prefixIcon: const Icon(Icons.search_rounded),
+                isDense: true,
+                filled: true,
+                fillColor: palette.glass,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
         Expanded(
           child: items.isEmpty
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(32),
                     child: Text(
-                      'Shake your phone to move finished tasks here.',
+                      all.isEmpty
+                          ? 'Shake your phone to move finished tasks here.'
+                          : 'No archived task matches “$_query”.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: palette.inkSoft, fontSize: 15),
                     ),
                   ),
                 )
               : ListView.builder(
-                  controller: controller,
+                  controller: widget.controller,
                   itemCount: items.length,
                   itemBuilder: (context, i) {
                     final t = items[i];
                     final done = t.completedAt;
-                    return ListTile(
+                    final tile = ListTile(
                       contentPadding: const EdgeInsets.only(left: 20, right: 8),
                       leading: Container(
                         width: 12,
@@ -109,12 +136,24 @@ class _ArchiveList extends StatelessWidget {
                       title: Text(t.text, style: TextStyle(color: palette.ink)),
                       subtitle: done == null
                           ? null
-                          : Text('Done ${_formatDay(done)}',
+                          : Text('Done ${formatDay(done)}',
                               style: TextStyle(color: palette.inkSoft)),
                       trailing: IconButton(
                         tooltip: 'Reopen task',
                         icon: Icon(Icons.undo_rounded, color: palette.inkSoft),
                         onPressed: () => store.reopenFromArchive(t.id),
+                      ),
+                    );
+                    return Dismissible(
+                      key: ValueKey(t.id),
+                      onDismissed: (_) => store.deleteArchived(t.id),
+                      background: ColoredBox(color: Theme.of(context).colorScheme.errorContainer),
+                      child: Semantics(
+                        customSemanticsActions: {
+                          const CustomSemanticsAction(label: 'Delete'): () =>
+                              store.deleteArchived(t.id),
+                        },
+                        child: tile,
                       ),
                     );
                   },

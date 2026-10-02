@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 
 import '../models/todo.dart';
 import '../services/storage.dart';
@@ -15,6 +16,7 @@ class TodoStore extends ChangeNotifier {
   bool loaded = false;
   bool soundOn = true;
   bool hapticsOn = true;
+  ThemeMode themeMode = ThemeMode.system;
 
   /// Pile snapshot from the last session, consumed once by the screen.
   Map<String, dynamic>? savedPile;
@@ -41,6 +43,40 @@ class TodoStore extends ChangeNotifier {
     return count;
   }
 
+  Iterable<DateTime> get _completions =>
+      [..._todos, ..._archived].map((t) => t.completedAt).whereType<DateTime>();
+
+  /// Days in a row with at least one finished task, ending today. A streak
+  /// that ended yesterday still counts until today is over.
+  int streak([DateTime? now]) {
+    final days = {for (final c in _completions) DateTime.utc(c.year, c.month, c.day)};
+    final n = now ?? DateTime.now();
+    var day = DateTime.utc(n.year, n.month, n.day);
+    if (!days.contains(day)) day = day.subtract(const Duration(days: 1));
+    var count = 0;
+    while (days.contains(day)) {
+      count++;
+      day = day.subtract(const Duration(days: 1));
+    }
+    return count;
+  }
+
+  /// Finished tasks per weekday, Monday first, across list and archive.
+  List<int> doneByWeekday() {
+    final counts = List.filled(7, 0);
+    for (final c in _completions) {
+      counts[c.weekday - 1]++;
+    }
+    return counts;
+  }
+
+  int get doneTotal => _completions.length;
+
+  /// Plain-text checklist of the current list, for the clipboard.
+  String exportText() => [
+        for (final t in _todos) '- [${t.completed ? 'x' : ' '}] ${t.text}',
+      ].join('\n');
+
   Future<void> load() async {
     final s = await _storage.load();
     _todos = s.firstRun ? _starterTasks() : s.todos;
@@ -48,6 +84,10 @@ class TodoStore extends ChangeNotifier {
     savedPile = s.pile;
     soundOn = s.soundOn;
     hapticsOn = s.hapticsOn;
+    themeMode = ThemeMode.values.firstWhere(
+      (m) => m.name == s.theme,
+      orElse: () => ThemeMode.system,
+    );
     loaded = true;
     notifyListeners();
     if (s.firstRun) _persist();
@@ -61,22 +101,26 @@ class TodoStore extends ChangeNotifier {
     return maxId;
   }
 
-  Todo add(String text, Priority priority) {
+  Todo add(String text, Priority priority, {DateTime? due}) {
     final todo = Todo(
       id: _nextId(),
       text: text.trim(),
       priority: priority,
       createdAt: DateTime.now(),
+      due: due,
     );
     _todos = [todo, ..._todos];
     _changed();
     return todo;
   }
 
-  void edit(int id, {required String text, required Priority priority}) {
+  void edit(int id, {required String text, required Priority priority, DateTime? due}) {
     _todos = [
       for (final t in _todos)
-        if (t.id == id) t.copyWith(text: text.trim(), priority: priority) else t,
+        if (t.id == id)
+          t.copyWith(text: text.trim(), priority: priority, due: due, clearDue: due == null)
+        else
+          t,
     ];
     _changed();
   }
@@ -138,6 +182,11 @@ class TodoStore extends ChangeNotifier {
     _changed();
   }
 
+  void deleteArchived(int id) {
+    _archived = _archived.where((t) => t.id != id).toList();
+    _changed();
+  }
+
   void clearArchive() {
     _archived = [];
     _changed();
@@ -145,14 +194,26 @@ class TodoStore extends ChangeNotifier {
 
   void setSound(bool on) {
     soundOn = on;
-    notifyListeners();
-    unawaited(_save(_storage.saveSettings(soundOn: soundOn, hapticsOn: hapticsOn)));
+    _settingsChanged();
   }
 
   void setHaptics(bool on) {
     hapticsOn = on;
+    _settingsChanged();
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    themeMode = mode;
+    _settingsChanged();
+  }
+
+  void _settingsChanged() {
     notifyListeners();
-    unawaited(_save(_storage.saveSettings(soundOn: soundOn, hapticsOn: hapticsOn)));
+    unawaited(_save(_storage.saveSettings(
+      soundOn: soundOn,
+      hapticsOn: hapticsOn,
+      theme: themeMode.name,
+    )));
   }
 
   Future<void> savePile(Map<String, dynamic> pile) => _save(_storage.savePile(pile));

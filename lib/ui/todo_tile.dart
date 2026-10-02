@@ -29,7 +29,9 @@ class TodoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Palette.of(context);
-    final checkColor = palette.strataFor(todo.completedAt ?? DateTime.now());
+    final now = DateTime.now();
+    final checkColor = palette.strataFor(todo.completedAt ?? now);
+    final dueIn = todo.completed ? null : todo.daysUntilDue(now);
 
     final row = SwipeToBlow(
       onSwiped: onSwiped,
@@ -58,14 +60,33 @@ class TodoTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: ListenableBuilder(
-                      listenable: world.membership,
-                      builder: (context, _) => TaskText(
-                        key: textKey,
-                        text: todo.text,
-                        style: taskTextStyle(color: palette.ink, priority: todo.priority),
-                        hidden: todo.completed || world.has(todo.id),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ListenableBuilder(
+                          listenable: world.membership,
+                          builder: (context, _) => TaskText(
+                            key: textKey,
+                            text: todo.text,
+                            style: taskTextStyle(color: palette.ink, priority: todo.priority),
+                            hidden: todo.completed || world.has(todo.id),
+                          ),
+                        ),
+                        if (dueIn != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              dueLabel(dueIn, todo.due!),
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: dueIn <= 0 ? FontWeight.w700 : FontWeight.w400,
+                                color: dueIn < 0
+                                    ? Theme.of(context).colorScheme.error
+                                    : palette.inkSoft,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],

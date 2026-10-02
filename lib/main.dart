@@ -26,12 +26,17 @@ class PhysicsTodoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PhysicsTodo',
-      debugShowCheckedModeBanner: false,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
-      home: TodoScreen(store: store),
+    return ListenableBuilder(
+      listenable: store,
+      builder: (context, child) => MaterialApp(
+        title: 'PhysicsTodo',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(Brightness.light),
+        darkTheme: buildTheme(Brightness.dark),
+        themeMode: store.themeMode,
+        home: child,
+      ),
+      child: TodoScreen(store: store),
     );
   }
 }

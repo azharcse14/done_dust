@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
+import 'package:flutter/services.dart';
 
 import '../models/todo.dart';
 import '../physics/particle.dart';
@@ -13,9 +14,14 @@ import '../state/todo_store.dart';
 import '../theme.dart';
 import 'archive_sheet.dart';
 import 'particle_layer.dart';
+import 'stats_sheet.dart';
 import 'task_editor_sheet.dart';
 import 'task_text.dart';
 import 'todo_tile.dart';
+
+enum _Show { all, open, done }
+
+enum _Sort { manual, priority, due }
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key, required this.store});
@@ -42,6 +48,12 @@ class _TodoScreenState extends State<TodoScreen>
   bool _restored = false;
   Timer? _saveTimer;
   Size _lastSize = Size.zero;
+
+  // Find bar: only changes what the list shows, never the store or the jar.
+  bool _finding = false;
+  String _query = '';
+  _Show _show = _Show.all;
+  _Sort _sort = _Sort.manual;
 
   // Captured during build so non-build code (the ticker) can use them.
   Palette _palette = Palette.light;
@@ -289,7 +301,11 @@ class _TodoScreenState extends State<TodoScreen>
   Future<void> _add() async {
     final draft = await showTaskEditor(context);
     if (draft == null || !mounted) return;
-    store.add(draft.text, draft.priority);
+    // Reversed so a pasted list keeps its order at the top.
+    for (final text in draft.texts.reversed) {
+      store.add(text, draft.priority, due: draft.due);
+    }
+    if (draft.texts.length > 1) _snack('Added ${draft.texts.length} tasks');
     if (_scroll.hasClients) {
       unawaited(_scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut));
     }
@@ -298,7 +314,12 @@ class _TodoScreenState extends State<TodoScreen>
   Future<void> _edit(Todo todo) async {
     final draft = await showTaskEditor(context, editing: todo);
     if (draft == null || !mounted) return;
-    store.edit(todo.id, text: draft.text, priority: draft.priority);
+    if (draft.duplicate) {
+      store.add(draft.texts.single, draft.priority, due: draft.due);
+      _snack('Duplicated “${_short(draft.texts.single)}”');
+    } else {
+      store.edit(todo.id, text: draft.texts.single, priority: draft.priority, due: draft.due);
+    }
   }
 
   void _swiped(Todo todo, double direction, double velocity) {
@@ -356,6 +377,62 @@ class _TodoScreenState extends State<TodoScreen>
         '${moved.length == 1 ? 'task' : 'tasks'} to the archive.');
   }
 
+  Future<void> _copyList() async {
+    final n = store.todos.length;
+    if (n == 0) {
+      _snack('The list is empty.');
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: store.exportText()));
+    if (mounted) _snack('Copied $n ${n == 1 ? 'task' : 'tasks'} to the clipboard');
+  }
+
+  void _toggleFind() => setState(() {
+        _finding = !_finding;
+        // Closing the bar must not leave tasks silently hidden.
+        if (!_finding) {
+          _query = '';
+          _show = _Show.all;
+        }
+      });
+
+  List<Todo> _visible(List<Todo> todos) {
+    final q = _query.toLowerCase();
+    // Letters flying home need their row on screen to land on, so a task
+    // just unchecked under "Done" stays until they arrive.
+    final returning = {
+      for (final g in _world.groups)
+        if (g.phase == Phase.returning) g.taskId,
+    };
+    final shown = [
+      for (final t in todos)
+        if ((q.isEmpty || t.text.toLowerCase().contains(q)) &&
+            (returning.contains(t.id) ||
+                switch (_show) {
+                  _Show.all => true,
+                  _Show.open => !t.completed,
+                  _Show.done => t.completed,
+                }))
+          t,
+    ];
+    if (_sort == _Sort.manual) return shown;
+    // List.sort is not stable; break ties on the original position.
+    final pos = {for (var i = 0; i < shown.length; i++) shown[i].id: i};
+    int byDue(Todo a, Todo b) => switch ((a.due, b.due)) {
+          (null, null) => 0,
+          (null, _) => 1,
+          (_, null) => -1,
+          (final x?, final y?) => x.compareTo(y),
+        };
+    return shown
+      ..sort((a, b) {
+        final c = _sort == _Sort.priority
+            ? b.priority.index.compareTo(a.priority.index)
+            : byDue(a, b);
+        return c != 0 ? c : pos[a.id]!.compareTo(pos[b.id]!);
+      });
+  }
+
   void _onShake() {
     if (!mounted) return;
     // Ignore shakes while a sheet or dialog is open on top of the list.
@@ -405,7 +482,7 @@ class _TodoScreenState extends State<TodoScreen>
                 ),
                 Positioned.fill(
                   child: ListenableBuilder(
-                    listenable: store,
+                    listenable: Listenable.merge([store, _world.membership]),
                     builder: (context, _) => _content(bottomPad),
                   ),
                 ),
@@ -435,25 +512,50 @@ class _TodoScreenState extends State<TodoScreen>
   }
 
   Widget _content(double bottomPad) {
-    final todos = store.todos;
+    final all = store.todos;
+    final todos = _visible(all);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Header(
           doneToday: store.doneToday(),
+          streak: store.streak(),
           archivedCount: store.archived.length,
           soundOn: store.soundOn,
           hapticsOn: store.hapticsOn,
+          themeMode: store.themeMode,
+          finding: _finding,
           onAdd: _add,
+          onFind: _toggleFind,
           onOpenArchive: () => showArchiveSheet(context, store),
+          onStats: () => showStatsSheet(context, store),
+          onCopy: _copyList,
           onEmptyJar: _emptyJar,
           onSound: store.setSound,
           onHaptics: store.setHaptics,
+          onTheme: store.setThemeMode,
         ),
+        if (_finding)
+          _FindBar(
+            show: _show,
+            sort: _sort,
+            onQuery: (q) => setState(() => _query = q.trim()),
+            onShow: (v) => setState(() => _show = v),
+            onSort: (v) => setState(() => _sort = v),
+          ),
         Expanded(
-          child: todos.isEmpty
+          child: all.isEmpty
               ? _EmptyState(onAdd: _add)
-              : ListView.builder(
+              : todos.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(
+                        'No task matches.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 15, color: _palette.inkSoft),
+                      ),
+                    )
+                  : ListView.builder(
                   controller: _scroll,
                   padding: EdgeInsets.only(top: 4, bottom: 170 + bottomPad),
                   itemCount: todos.length,
@@ -476,30 +578,50 @@ class _TodoScreenState extends State<TodoScreen>
   }
 }
 
-enum _MenuAction { archive, emptyJar, sound, haptics }
+enum _MenuAction { archive, stats, copy, emptyJar, sound, haptics, theme }
 
 class _Header extends StatelessWidget {
   const _Header({
     required this.doneToday,
+    required this.streak,
     required this.archivedCount,
     required this.soundOn,
     required this.hapticsOn,
+    required this.themeMode,
+    required this.finding,
     required this.onAdd,
+    required this.onFind,
     required this.onOpenArchive,
+    required this.onStats,
+    required this.onCopy,
     required this.onEmptyJar,
     required this.onSound,
     required this.onHaptics,
+    required this.onTheme,
   });
 
   final int doneToday;
+  final int streak;
   final int archivedCount;
   final bool soundOn;
   final bool hapticsOn;
+  final ThemeMode themeMode;
+  final bool finding;
   final VoidCallback onAdd;
+  final VoidCallback onFind;
   final VoidCallback onOpenArchive;
+  final VoidCallback onStats;
+  final VoidCallback onCopy;
   final VoidCallback onEmptyJar;
   final ValueChanged<bool> onSound;
   final ValueChanged<bool> onHaptics;
+  final ValueChanged<ThemeMode> onTheme;
+
+  static const _themeNames = {
+    ThemeMode.system: 'System',
+    ThemeMode.light: 'Light',
+    ThemeMode.dark: 'Dark',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -527,9 +649,16 @@ class _Header extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Text(
-                      doneToday == 0 ? 'Nothing done today yet' : '$doneToday done today',
-                      style: TextStyle(fontSize: 13.5, color: palette.inkSoft),
+                    Flexible(
+                      child: Text(
+                        [
+                          doneToday == 0 ? 'Nothing done today yet' : '$doneToday done today',
+                          if (streak > 1) '$streak-day streak',
+                        ].join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 13.5, color: palette.inkSoft),
+                      ),
                     ),
                     const SizedBox(width: 14),
                     _StrataLegend(palette: palette),
@@ -537,6 +666,11 @@ class _Header extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            tooltip: finding ? 'Close search' : 'Search and sort',
+            onPressed: onFind,
+            icon: Icon(finding ? Icons.search_off_rounded : Icons.search_rounded, color: palette.ink),
           ),
           IconButton.filled(
             tooltip: 'Add task',
@@ -554,6 +688,12 @@ class _Header extends StatelessWidget {
               switch (a) {
                 case _MenuAction.archive:
                   onOpenArchive();
+                case _MenuAction.stats:
+                  onStats();
+                case _MenuAction.copy:
+                  onCopy();
+                case _MenuAction.theme:
+                  onTheme(ThemeMode.values[(themeMode.index + 1) % ThemeMode.values.length]);
                 case _MenuAction.emptyJar:
                   onEmptyJar();
                 case _MenuAction.sound:
@@ -567,6 +707,8 @@ class _Header extends StatelessWidget {
                 value: _MenuAction.archive,
                 child: Text(archivedCount == 0 ? 'Archive' : 'Archive ($archivedCount)'),
               ),
+              const PopupMenuItem(value: _MenuAction.stats, child: Text('Stats')),
+              const PopupMenuItem(value: _MenuAction.copy, child: Text('Copy list')),
               const PopupMenuItem(
                 value: _MenuAction.emptyJar,
                 child: Text('Empty the jar'),
@@ -581,6 +723,10 @@ class _Header extends StatelessWidget {
                 value: _MenuAction.haptics,
                 checked: hapticsOn,
                 child: const Text('Vibration'),
+              ),
+              PopupMenuItem(
+                value: _MenuAction.theme,
+                child: Text('Theme: ${_themeNames[themeMode]}'),
               ),
             ],
           ),
@@ -637,6 +783,81 @@ class _StrataLegend extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FindBar extends StatelessWidget {
+  const _FindBar({
+    required this.show,
+    required this.sort,
+    required this.onQuery,
+    required this.onShow,
+    required this.onSort,
+  });
+
+  final _Show show;
+  final _Sort sort;
+  final ValueChanged<String> onQuery;
+  final ValueChanged<_Show> onShow;
+  final ValueChanged<_Sort> onSort;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Palette.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 12, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            autofocus: true,
+            onChanged: onQuery,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: 'Search tasks',
+              prefixIcon: const Icon(Icons.search_rounded),
+              isDense: true,
+              filled: true,
+              fillColor: palette.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              for (final (value, label) in const [
+                (_Show.all, 'All'),
+                (_Show.open, 'Open'),
+                (_Show.done, 'Done'),
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChoiceChip(
+                    label: Text(label),
+                    selected: show == value,
+                    onSelected: (_) => onShow(value),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              const Spacer(),
+              DropdownButton<_Sort>(
+                value: sort,
+                underline: const SizedBox.shrink(),
+                onChanged: (v) => onSort(v!),
+                items: const [
+                  DropdownMenuItem(value: _Sort.manual, child: Text('Newest')),
+                  DropdownMenuItem(value: _Sort.priority, child: Text('Priority')),
+                  DropdownMenuItem(value: _Sort.due, child: Text('Due date')),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     );

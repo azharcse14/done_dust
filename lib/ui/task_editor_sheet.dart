@@ -3,7 +3,13 @@ import 'package:flutter/material.dart';
 import '../models/todo.dart';
 import '../theme.dart';
 
-typedef TaskDraft = ({String text, Priority priority});
+/// [texts] has one entry per pasted line when adding; editing always has
+/// exactly one. [duplicate] asks for a copy instead of saving the edit.
+typedef TaskDraft = ({List<String> texts, Priority priority, DateTime? due, bool duplicate});
+
+/// Every letter becomes a particle; keeps one task well under the jar's
+/// letter limit.
+const _maxTaskLength = 200;
 
 Future<TaskDraft?> showTaskEditor(BuildContext context, {Todo? editing}) {
   return showModalBottomSheet<TaskDraft>(
@@ -28,6 +34,7 @@ class _TaskEditorState extends State<_TaskEditor> {
   late final TextEditingController _text =
       TextEditingController(text: widget.editing?.text ?? '');
   late Priority _priority = widget.editing?.priority ?? Priority.normal;
+  late DateTime? _due = widget.editing?.due;
 
   @override
   void dispose() {
@@ -35,10 +42,35 @@ class _TaskEditorState extends State<_TaskEditor> {
     super.dispose();
   }
 
-  void _submit() {
-    final value = _text.text.trim();
-    if (value.isEmpty) return;
-    Navigator.of(context).pop<TaskDraft>((text: value, priority: _priority));
+  /// A pasted list becomes one task per line. An edit stays one task.
+  List<String> _lines(String value) {
+    final lines = widget.editing != null
+        ? [value.replaceAll(RegExp(r'\s*\n\s*'), ' ')]
+        : value.split('\n');
+    return [
+      for (final l in lines.map((l) => l.trim()))
+        if (l.isNotEmpty)
+          l.characters.length > _maxTaskLength ? l.characters.take(_maxTaskLength).toString() : l,
+    ];
+  }
+
+  void _submit({bool duplicate = false}) {
+    final texts = _lines(_text.text);
+    if (texts.isEmpty) return;
+    Navigator.of(context).pop<TaskDraft>(
+      (texts: texts, priority: _priority, due: _due, duplicate: duplicate),
+    );
+  }
+
+  Future<void> _pickDue() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _due ?? now,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 5),
+    );
+    if (picked != null && mounted) setState(() => _due = picked);
   }
 
   String get _hint => switch (_priority) {
@@ -78,15 +110,15 @@ class _TaskEditorState extends State<_TaskEditor> {
             autofocus: true,
             minLines: 1,
             maxLines: 4,
-            // Every letter becomes a particle; keeps one task well under
-            // the jar's letter limit.
-            maxLength: 200,
+            // Adding allows a pasted multi-line list; each line is capped
+            // in _lines instead.
+            maxLength: isEdit ? _maxTaskLength : null,
             textCapitalization: TextCapitalization.sentences,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submit(),
             style: taskTextStyle(color: palette.ink, priority: _priority),
             decoration: InputDecoration(
-              hintText: 'What needs doing?',
+              hintText: isEdit ? 'What needs doing?' : 'What needs doing? Paste a list to add many.',
               filled: true,
               fillColor: palette.glass,
               border: OutlineInputBorder(
@@ -108,17 +140,43 @@ class _TaskEditorState extends State<_TaskEditor> {
           ),
           const SizedBox(height: 8),
           Text(_hint, style: TextStyle(color: palette.inkSoft, fontSize: 13)),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              InputChip(
+                avatar: const Icon(Icons.event_rounded, size: 18),
+                label: Text(_due == null ? 'Add due date' : 'Due ${formatDay(_due!)}'),
+                onPressed: _pickDue,
+                onDeleted: _due == null ? null : () => setState(() => _due = null),
+                deleteButtonTooltipMessage: 'Remove due date',
+              ),
+              const Spacer(),
+              if (isEdit)
+                TextButton.icon(
+                  onPressed: () => _submit(duplicate: true),
+                  icon: const Icon(Icons.copy_rounded, size: 18),
+                  label: const Text('Duplicate'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: _text,
-            builder: (context, value, _) => FilledButton(
-              onPressed: value.text.trim().isEmpty ? null : _submit,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              child: Text(isEdit ? 'Save changes' : 'Add task'),
-            ),
+            builder: (context, value, _) {
+              final count = _lines(value.text).length;
+              return FilledButton(
+                onPressed: count == 0 ? null : _submit,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: Text(isEdit
+                    ? 'Save changes'
+                    : count > 1
+                        ? 'Add $count tasks'
+                        : 'Add task'),
+              );
+            },
           ),
         ],
       ),

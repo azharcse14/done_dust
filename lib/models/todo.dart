@@ -9,6 +9,7 @@ class Todo {
     required this.createdAt,
     this.priority = Priority.normal,
     this.completedAt,
+    this.due,
   });
 
   final int id;
@@ -20,13 +21,27 @@ class Todo {
   /// which sediment colour the letters turn into.
   final DateTime? completedAt;
 
+  /// Optional day the task should be done by (time of day is ignored).
+  final DateTime? due;
+
   bool get completed => completedAt != null;
+
+  /// Whole days from [now] until [due]: negative = overdue, 0 = today.
+  int? daysUntilDue(DateTime now) {
+    final d = due;
+    if (d == null) return null;
+    return DateTime.utc(d.year, d.month, d.day)
+        .difference(DateTime.utc(now.year, now.month, now.day))
+        .inDays;
+  }
 
   Todo copyWith({
     String? text,
     Priority? priority,
     DateTime? completedAt,
     bool reopen = false,
+    DateTime? due,
+    bool clearDue = false,
   }) {
     return Todo(
       id: id,
@@ -34,6 +49,7 @@ class Todo {
       priority: priority ?? this.priority,
       createdAt: createdAt,
       completedAt: reopen ? null : (completedAt ?? this.completedAt),
+      due: clearDue ? null : (due ?? this.due),
     );
   }
 
@@ -43,10 +59,12 @@ class Todo {
         'priority': priority.name,
         'createdAt': createdAt.millisecondsSinceEpoch,
         'completedAt': completedAt?.millisecondsSinceEpoch,
+        if (due != null) 'due': due!.millisecondsSinceEpoch,
       };
 
   factory Todo.fromJson(Map<String, dynamic> json) {
     final completed = json['completedAt'];
+    final due = json['due'];
     return Todo(
       id: json['id'] as int,
       text: json['text'] as String,
@@ -58,6 +76,7 @@ class Todo {
       completedAt: completed == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(completed as int),
+      due: due == null ? null : DateTime.fromMillisecondsSinceEpoch(due as int),
     );
   }
 }

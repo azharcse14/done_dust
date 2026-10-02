@@ -11,6 +11,7 @@ class StoredState {
     required this.pile,
     required this.soundOn,
     required this.hapticsOn,
+    required this.theme,
     required this.firstRun,
   });
 
@@ -19,6 +20,7 @@ class StoredState {
   final Map<String, dynamic>? pile;
   final bool soundOn;
   final bool hapticsOn;
+  final String? theme;
   final bool firstRun;
 }
 
@@ -29,6 +31,7 @@ class Storage {
   static const _kPile = 'pile.v2';
   static const _kSound = 'sound';
   static const _kHaptics = 'haptics';
+  static const _kTheme = 'theme';
 
   SharedPreferences? _prefs;
 
@@ -41,6 +44,7 @@ class Storage {
       pile: _decodeMap(prefs.getString(_kPile)),
       soundOn: prefs.getBool(_kSound) ?? true,
       hapticsOn: prefs.getBool(_kHaptics) ?? true,
+      theme: prefs.getString(_kTheme),
       firstRun: rawTodos == null,
     );
   }
@@ -56,10 +60,15 @@ class Storage {
     await prefs.setString(_kPile, jsonEncode(pile));
   }
 
-  Future<void> saveSettings({required bool soundOn, required bool hapticsOn}) async {
+  Future<void> saveSettings({
+    required bool soundOn,
+    required bool hapticsOn,
+    required String theme,
+  }) async {
     final prefs = _prefs ??= await SharedPreferences.getInstance();
     await prefs.setBool(_kSound, soundOn);
     await prefs.setBool(_kHaptics, hapticsOn);
+    await prefs.setString(_kTheme, theme);
   }
 
   /// A bad entry is skipped, not allowed to wipe the whole list. If the

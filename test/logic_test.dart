@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:ui';
+
+import 'package:flutter/material.dart' show ThemeMode;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:physics_todo/models/todo.dart';
@@ -34,6 +37,15 @@ void main() {
       final back = Todo.fromJson(t.toJson());
       expect(back.priority, Priority.high);
       expect(back.completedAt, t.completedAt);
+    });
+
+    test('due date round-trips and counts whole days', () {
+      final t = Todo(id: 1, text: 'a', createdAt: DateTime(2026), due: DateTime(2026, 10, 3));
+      expect(Todo.fromJson(t.toJson()).due, DateTime(2026, 10, 3));
+      expect(t.daysUntilDue(DateTime(2026, 10, 2, 23, 59)), 1);
+      expect(t.daysUntilDue(DateTime(2026, 10, 5)), -2);
+      expect(t.copyWith(clearDue: true).due, isNull);
+      expect(Todo.fromJson(t.copyWith(clearDue: true).toJson()).due, isNull);
     });
 
     test('unknown priority falls back to normal', () {
@@ -106,6 +118,47 @@ void main() {
       store.reopenFromArchive(a.id);
       expect(store.byId(a.id)!.completed, isFalse);
       expect(store.archived, isEmpty);
+    });
+
+    test('streak, weekday counts and export', () async {
+      Map<String, Object?> done(int id, DateTime d) =>
+          {'id': id, 'text': 't$id', 'createdAt': 0, 'completedAt': d.millisecondsSinceEpoch};
+      SharedPreferences.setMockInitialValues({
+        'todos.v2': jsonEncode([
+          done(1, DateTime(2026, 10, 1, 9)), // Thu
+          {'id': 2, 'text': 'open', 'createdAt': 0},
+        ]),
+        'archive.v2': jsonEncode([
+          done(3, DateTime(2026, 9, 30, 22)), // Wed
+          done(4, DateTime(2026, 9, 28)), // gap on the 29th
+        ]),
+      });
+      final store = TodoStore(Storage());
+      await store.load();
+      expect(store.streak(DateTime(2026, 10, 1, 12)), 2);
+      expect(store.streak(DateTime(2026, 10, 2)), 2, reason: 'alive until today ends');
+      expect(store.streak(DateTime(2026, 10, 3)), 0);
+      expect(store.doneByWeekday(), [1, 0, 1, 1, 0, 0, 0]);
+      expect(store.doneTotal, 3);
+      expect(store.exportText(), '- [x] t1\n- [ ] open');
+    });
+
+    test('delete one archived task, theme persists', () async {
+      final store = await _emptyStore();
+      final a = store.add('a', Priority.normal);
+      final b = store.add('b', Priority.normal, due: DateTime(2026, 1, 2));
+      store.edit(b.id, text: 'b', priority: Priority.low);
+      expect(store.byId(b.id)!.due, isNull, reason: 'edit without a due date clears it');
+      store.setCompleted(a.id, true);
+      store.archive([a.id]);
+      store.deleteArchived(a.id);
+      expect(store.archived, isEmpty);
+
+      store.setThemeMode(ThemeMode.dark);
+      await Future<void>.delayed(Duration.zero);
+      final again = TodoStore(Storage());
+      await again.load();
+      expect(again.themeMode, ThemeMode.dark);
     });
 
     test('changes survive a reload', () async {

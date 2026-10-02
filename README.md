@@ -39,6 +39,20 @@ Tilt and shake only work on a real device; on an emulator use
 - **Everything persists**, including where each letter came to rest.
   Positions are stored relative to the jar, so the pile survives a
   different screen size.
+- **Due dates.** Pick one in the task sheet; rows show "Due today",
+  "Due tomorrow" or a red "Overdue" label.
+- **Search, filter and sort** (🔍 in the header): find by text, show
+  All / Open / Done, sort by newest, priority or due date.
+- **Paste a list** into the new-task sheet to add one task per line.
+- **Duplicate** a task from its edit sheet (long-press a row).
+- **Streak** of days in a row with a finished task, shown in the header.
+- **Stats** (⋮ → Stats): totals, streak, best day and a bar per weekday in
+  the jar's layer colours.
+- **Archive search and delete**: search the archive, swipe an entry to
+  delete it for good.
+- **Copy list** (⋮ → Copy list) puts a `- [ ]` / `- [x]` checklist on the
+  clipboard.
+- **Theme** (⋮ → Theme) cycles System / Light / Dark and is remembered.
 - **Bangla and emoji safe.** Text is split by grapheme cluster, not by
   UTF-16 unit, so vowel signs stay attached.
 
@@ -79,6 +93,7 @@ lib/
     ├── todo_tile.dart            Row, checkbox, swipe gesture
     ├── task_text.dart            Text with exact per-grapheme anchors
     ├── particle_layer.dart       Letter painter, jar, touch gate
+    ├── stats_sheet.dart          Totals and per-weekday bars
     ├── task_editor_sheet.dart    Add / edit sheet
     └── archive_sheet.dart        Archive list
 ```
