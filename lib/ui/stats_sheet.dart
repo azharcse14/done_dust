@@ -2,10 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../state/todo_store.dart';
 import '../theme.dart';
-
-const _names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 /// Totals and a bar per weekday, in the same colours as the jar's layers.
 Future<void> showStatsSheet(BuildContext context, TodoStore store) {
@@ -25,7 +24,7 @@ Future<void> showStatsSheet(BuildContext context, TodoStore store) {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Stats',
+            s.stats,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
@@ -35,22 +34,20 @@ Future<void> showStatsSheet(BuildContext context, TodoStore store) {
           ),
           const SizedBox(height: 12),
           Text(
-            '${store.doneTotal} finished in total · '
-            '${store.todos.where((t) => !t.completed).length} open · '
-            '${streak == 1 ? '1-day' : '$streak-day'} streak',
+            s.statsLine(store.doneTotal, store.todos.where((t) => !t.completed).length, streak),
             style: TextStyle(color: palette.inkSoft, fontSize: 14),
           ),
           if (top > 0) ...[
             const SizedBox(height: 4),
             Text(
-              'Best day: ${_names[byDay.indexOf(top)]}',
+              s.bestDay(s.weekdays[byDay.indexOf(top)]),
               style: TextStyle(color: palette.inkSoft, fontSize: 14),
             ),
           ],
           const SizedBox(height: 18),
           for (var i = 0; i < 7; i++)
             Semantics(
-              label: '${_names[i]}: ${byDay[i]} finished',
+              label: s.finishedOn(s.weekdays[i], byDay[i]),
               excludeSemantics: true,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
@@ -58,7 +55,7 @@ Future<void> showStatsSheet(BuildContext context, TodoStore store) {
                   children: [
                     SizedBox(
                       width: 36,
-                      child: Text(_names[i].substring(0, 3),
+                      child: Text(s.weekdaysShort[i],
                           style: TextStyle(color: palette.inkSoft, fontSize: 13)),
                     ),
                     Expanded(
@@ -74,7 +71,7 @@ Future<void> showStatsSheet(BuildContext context, TodoStore store) {
                     ),
                     SizedBox(
                       width: 36,
-                      child: Text('${byDay[i]}',
+                      child: Text(s.n(byDay[i]),
                           textAlign: TextAlign.end,
                           style: TextStyle(color: palette.ink, fontSize: 13)),
                     ),

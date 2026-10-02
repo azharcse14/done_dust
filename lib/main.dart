@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'l10n.dart';
 import 'services/storage.dart';
 import 'state/todo_store.dart';
 import 'theme.dart';
@@ -31,6 +33,9 @@ class PhysicsTodoApp extends StatelessWidget {
       builder: (context, child) => MaterialApp(
         title: 'Done Dust',
         debugShowCheckedModeBanner: false,
+        locale: s.locale,
+        supportedLocales: supportedLocales,
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),
         themeMode: store.themeMode,

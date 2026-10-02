@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show ThemeMode;
 
+import '../l10n.dart';
 import '../models/todo.dart';
 import '../services/storage.dart';
 
@@ -17,6 +18,9 @@ class TodoStore extends ChangeNotifier {
   bool soundOn = true;
   bool hapticsOn = true;
   ThemeMode themeMode = ThemeMode.system;
+
+  /// 'system', 'en' or 'bn'.
+  String language = 'system';
 
   /// Tasks to finish per day; 0 = no goal.
   int dailyGoal = 0;
@@ -91,6 +95,7 @@ class TodoStore extends ChangeNotifier {
       orElse: () => ThemeMode.system,
     );
     dailyGoal = s.dailyGoal;
+    setLanguage(s.language ?? 'system', save: false);
     loaded = true;
     notifyListeners();
     if (s.firstRun) _persist();
@@ -237,6 +242,12 @@ class TodoStore extends ChangeNotifier {
     _settingsChanged();
   }
 
+  void setLanguage(String code, {bool save = true}) {
+    language = code;
+    s = S.forLanguage(code);
+    if (save) _settingsChanged();
+  }
+
   void setDailyGoal(int goal) {
     dailyGoal = goal;
     _settingsChanged();
@@ -248,6 +259,7 @@ class TodoStore extends ChangeNotifier {
       soundOn: soundOn,
       hapticsOn: hapticsOn,
       theme: themeMode.name,
+      language: language,
       dailyGoal: dailyGoal,
     )));
   }
@@ -268,14 +280,17 @@ class TodoStore extends ChangeNotifier {
   static List<Todo> _starterTasks() {
     final now = DateTime.now();
     var id = now.millisecondsSinceEpoch;
-    Todo t(String text, Priority p) => Todo(id: id++, text: text, priority: p, createdAt: now);
+    const priorities = [
+      Priority.normal,
+      Priority.low,
+      Priority.high,
+      Priority.low,
+      Priority.normal,
+      Priority.normal
+    ];
     return [
-      t('Check me off and watch the letters fall', Priority.normal),
-      t('Tilt your phone to slide the pile', Priority.low),
-      t('Important tasks are bold and fall like stone', Priority.high),
-      t('Drag a fallen letter, or tap the pile', Priority.low),
-      t('Swipe a task sideways to blow it away', Priority.normal),
-      t('Shake the phone to empty the jar into the archive', Priority.normal),
+      for (final (i, text) in s.starterTasks.indexed)
+        Todo(id: id++, text: text, priority: priorities[i], createdAt: now),
     ];
   }
 }

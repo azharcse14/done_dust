@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../models/todo.dart';
 import '../theme.dart';
 
@@ -75,9 +76,9 @@ class _TaskEditorState extends State<_TaskEditor> {
   }
 
   String get _hint => switch (_priority) {
-        Priority.low => 'Light letters that bounce when they land.',
-        Priority.normal => 'Letters settle like sand.',
-        Priority.high => 'Bold, heavy letters that push others aside.',
+        Priority.low => s.lowHint,
+        Priority.normal => s.normalHint,
+        Priority.high => s.highHint,
       };
 
   @override
@@ -97,7 +98,7 @@ class _TaskEditorState extends State<_TaskEditor> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            isEdit ? 'Edit task' : 'New task',
+            isEdit ? s.editTask : s.newTask,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
@@ -119,8 +120,7 @@ class _TaskEditorState extends State<_TaskEditor> {
             onSubmitted: (_) => _submit(),
             style: taskTextStyle(color: palette.ink, priority: _priority),
             decoration: InputDecoration(
-              hintText:
-                  isEdit ? 'What needs doing?' : 'What needs doing? Paste a list to add many.',
+              hintText: isEdit ? s.whatNeedsDoing : s.whatNeedsDoingMany,
               filled: true,
               fillColor: palette.glass,
               border: OutlineInputBorder(
@@ -132,13 +132,13 @@ class _TaskEditorState extends State<_TaskEditor> {
           const SizedBox(height: 18),
           SegmentedButton<Priority>(
             showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(value: Priority.low, label: Text('Low')),
-              ButtonSegment(value: Priority.normal, label: Text('Normal')),
-              ButtonSegment(value: Priority.high, label: Text('High')),
+            segments: [
+              ButtonSegment(value: Priority.low, label: Text(s.low)),
+              ButtonSegment(value: Priority.normal, label: Text(s.normal)),
+              ButtonSegment(value: Priority.high, label: Text(s.high)),
             ],
             selected: {_priority},
-            onSelectionChanged: (s) => setState(() => _priority = s.first),
+            onSelectionChanged: (p) => setState(() => _priority = p.first),
           ),
           const SizedBox(height: 8),
           Text(_hint, style: TextStyle(color: palette.inkSoft, fontSize: 13)),
@@ -149,7 +149,7 @@ class _TaskEditorState extends State<_TaskEditor> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (_due == null)
-                for (final (label, days) in const [('Today', 0), ('Tomorrow', 1)])
+                for (final (label, days) in [(s.today, 0), (s.tomorrow, 1)])
                   ActionChip(
                     label: Text(label),
                     onPressed: () {
@@ -159,16 +159,16 @@ class _TaskEditorState extends State<_TaskEditor> {
                   ),
               InputChip(
                 avatar: const Icon(Icons.event_rounded, size: 18),
-                label: Text(_due == null ? 'Pick date' : 'Due ${formatDay(_due!)}'),
+                label: Text(_due == null ? s.pickDate : s.due(formatDay(_due!))),
                 onPressed: _pickDue,
                 onDeleted: _due == null ? null : () => setState(() => _due = null),
-                deleteButtonTooltipMessage: 'Remove due date',
+                deleteButtonTooltipMessage: s.removeDueDate,
               ),
               if (isEdit)
                 TextButton.icon(
                   onPressed: () => _submit(duplicate: true),
                   icon: const Icon(Icons.copy_rounded, size: 18),
-                  label: const Text('Duplicate'),
+                  label: Text(s.duplicate),
                 ),
             ],
           ),
@@ -184,10 +184,10 @@ class _TaskEditorState extends State<_TaskEditor> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 child: Text(isEdit
-                    ? 'Save changes'
+                    ? s.saveChanges
                     : count > 1
-                        ? 'Add $count tasks'
-                        : 'Add task'),
+                        ? s.addMany(count)
+                        : s.addTask),
               );
             },
           ),

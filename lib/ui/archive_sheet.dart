@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../l10n.dart';
 import '../state/todo_store.dart';
 import '../theme.dart';
 
@@ -50,9 +51,9 @@ class _ArchiveListState extends State<_ArchiveList> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: const Text('Deleted from archive'),
+        content: Text(s.deletedFromArchive),
         action:
-            SnackBarAction(label: 'Undo', onPressed: () => store.undoDeleteArchived(task, index)),
+            SnackBarAction(label: s.undo, onPressed: () => store.undoDeleteArchived(task, index)),
       ));
   }
 
@@ -60,12 +61,11 @@ class _ArchiveListState extends State<_ArchiveList> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear the archive?'),
-        content: const Text('Archived tasks will be deleted for good.'),
+        title: Text(s.clearArchiveQ),
+        content: Text(s.clearArchiveBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true), child: const Text('Clear archive')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(s.keep)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(s.clearArchive)),
         ],
       ),
     );
@@ -88,7 +88,7 @@ class _ArchiveListState extends State<_ArchiveList> {
             children: [
               Expanded(
                 child: Text(
-                  'Archive',
+                  s.archive,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -100,7 +100,7 @@ class _ArchiveListState extends State<_ArchiveList> {
               if (all.isNotEmpty)
                 TextButton(
                   onPressed: () => _confirmClear(context),
-                  child: const Text('Clear archive'),
+                  child: Text(s.clearArchive),
                 ),
             ],
           ),
@@ -111,7 +111,7 @@ class _ArchiveListState extends State<_ArchiveList> {
             child: TextField(
               onChanged: (v) => setState(() => _query = v.trim()),
               decoration: InputDecoration(
-                hintText: 'Search archive',
+                hintText: s.searchArchive,
                 prefixIcon: const Icon(Icons.search_rounded),
                 isDense: true,
                 filled: true,
@@ -129,9 +129,7 @@ class _ArchiveListState extends State<_ArchiveList> {
                   child: Padding(
                     padding: const EdgeInsets.all(32),
                     child: Text(
-                      all.isEmpty
-                          ? 'Shake your phone to move finished tasks here.'
-                          : 'No archived task matches “$_query”.',
+                      all.isEmpty ? s.archiveEmpty : s.noArchiveMatch(_query),
                       textAlign: TextAlign.center,
                       style: TextStyle(color: palette.inkSoft, fontSize: 15),
                     ),
@@ -156,10 +154,10 @@ class _ArchiveListState extends State<_ArchiveList> {
                       title: Text(t.text, style: TextStyle(color: palette.ink)),
                       subtitle: done == null
                           ? null
-                          : Text('Done ${formatDay(done)}',
+                          : Text(s.doneOn(formatDay(done)),
                               style: TextStyle(color: palette.inkSoft)),
                       trailing: IconButton(
-                        tooltip: 'Reopen task',
+                        tooltip: s.reopenTask,
                         icon: Icon(Icons.undo_rounded, color: palette.inkSoft),
                         onPressed: () => store.reopenFromArchive(t.id),
                       ),
@@ -170,7 +168,7 @@ class _ArchiveListState extends State<_ArchiveList> {
                       background: ColoredBox(color: Theme.of(context).colorScheme.errorContainer),
                       child: Semantics(
                         customSemanticsActions: {
-                          const CustomSemanticsAction(label: 'Delete'): () => _delete(t.id),
+                          CustomSemanticsAction(label: s.delete): () => _delete(t.id),
                         },
                         child: tile,
                       ),

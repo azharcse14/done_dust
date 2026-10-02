@@ -60,4 +60,23 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(DatePickerDialog), findsOneWidget);
   });
+
+  testWidgets('settings sheet switches the app to Bangla and saves it', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = TodoStore(Storage());
+    await store.load();
+    addTearDown(() => store.setLanguage('en'));
+    await tester.pumpWidget(PhysicsTodoApp(store: store));
+
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('বাংলা'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('সেটিংস'), findsOneWidget);
+    expect(find.text('আমার কাজ'), findsOneWidget);
+    expect((await Storage().load()).language, 'bn');
+  });
 }

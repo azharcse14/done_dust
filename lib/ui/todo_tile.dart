@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../l10n.dart';
 import '../models/todo.dart';
 import '../physics/particle_world.dart';
 import '../theme.dart';
@@ -108,7 +109,7 @@ class TodoTile extends StatelessWidget {
     // Swiping is the only way to delete; screen readers get it as an action.
     final tile = Semantics(
       customSemanticsActions: {
-        const CustomSemanticsAction(label: 'Delete'): () => onSwiped(1, 0),
+        CustomSemanticsAction(label: s.delete): () => onSwiped(1, 0),
       },
       child: row,
     );

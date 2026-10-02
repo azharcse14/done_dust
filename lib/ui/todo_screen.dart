@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 
+import '../l10n.dart';
 import '../models/todo.dart';
 import '../physics/particle.dart';
 import '../physics/particle_world.dart';
@@ -14,6 +15,7 @@ import '../state/todo_store.dart';
 import '../theme.dart';
 import 'archive_sheet.dart';
 import 'particle_layer.dart';
+import 'settings_sheet.dart';
 import 'stats_sheet.dart';
 import 'task_editor_sheet.dart';
 import 'task_text.dart';
@@ -263,13 +265,13 @@ class _TodoScreenState extends State<TodoScreen>
       ..showSnackBar(SnackBar(
         content: Text(message),
         duration: const Duration(seconds: 4),
-        action: onUndo == null ? null : SnackBarAction(label: 'Undo', onPressed: onUndo),
+        action: onUndo == null ? null : SnackBarAction(label: s.undo, onPressed: onUndo),
       ));
   }
 
   String _jarLabel() {
     final n = store.todos.where((t) => t.completed).length;
-    return n == 0 ? 'Empty jar' : 'Jar with letters of $n finished ${n == 1 ? 'task' : 'tasks'}';
+    return n == 0 ? s.emptyJar : s.jarWith(n);
   }
 
   static String _short(String text) =>
@@ -293,9 +295,9 @@ class _TodoScreenState extends State<TodoScreen>
       }
       store.setCompleted(todo.id, true);
       if (store.todos.every((t) => t.completed)) {
-        _celebrate('All done. Enjoy the quiet.');
+        _celebrate(s.allDone);
       } else if (store.reachedGoalJustNow()) {
-        _celebrate('Daily goal reached: ${store.dailyGoal} done today.');
+        _celebrate(s.goalReached(store.dailyGoal));
       }
     } else {
       _world.startReturn(todo.id);
@@ -317,7 +319,7 @@ class _TodoScreenState extends State<TodoScreen>
     for (final text in draft.texts.reversed) {
       store.add(text, draft.priority, due: draft.due);
     }
-    if (draft.texts.length > 1) _snack('Added ${draft.texts.length} tasks');
+    if (draft.texts.length > 1) _snack(s.added(draft.texts.length));
     if (_scroll.hasClients) {
       unawaited(
           _scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut));
@@ -329,7 +331,7 @@ class _TodoScreenState extends State<TodoScreen>
     if (draft == null || !mounted) return;
     if (draft.duplicate) {
       store.add(draft.texts.single, draft.priority, due: draft.due);
-      _snack('Duplicated “${_short(draft.texts.single)}”');
+      _snack(s.duplicated(_short(draft.texts.single)));
     } else {
       store.edit(todo.id, text: draft.texts.single, priority: draft.priority, due: draft.due);
     }
@@ -353,7 +355,7 @@ class _TodoScreenState extends State<TodoScreen>
     final removed = store.delete(todo.id);
     if (removed == null) return;
     final (task, index) = removed;
-    _snack('Deleted “${_short(task.text)}”', onUndo: () {
+    _snack(s.deleted(_short(task.text)), onUndo: () {
       _world.remove(task.id);
       store.undoDelete(task, index);
       if (task.completed) _pour(task);
@@ -366,7 +368,7 @@ class _TodoScreenState extends State<TodoScreen>
         if (t.completed) t.id
     };
     if (done.isEmpty) {
-      _snack('Nothing to archive yet. Finish a task first.');
+      _snack(s.nothingToArchive);
       return;
     }
     _world.ejectJar(done);
@@ -375,7 +377,7 @@ class _TodoScreenState extends State<TodoScreen>
       ..whoosh();
     final moved = store.archive(done);
     _snack(
-      'Archived ${moved.length} ${moved.length == 1 ? 'task' : 'tasks'}',
+      s.archived(moved.length),
       onUndo: () {
         for (final t in store.unarchive(moved)) {
           _pour(t);
@@ -388,18 +390,17 @@ class _TodoScreenState extends State<TodoScreen>
   void _onOverflow(List<int> ids) {
     final moved = store.archive(ids);
     if (moved.isEmpty || !mounted) return;
-    _snack('Jar is full. Moved ${moved.length} oldest '
-        '${moved.length == 1 ? 'task' : 'tasks'} to the archive.');
+    _snack(s.jarFull(moved.length));
   }
 
   Future<void> _copyList() async {
     final n = store.todos.length;
     if (n == 0) {
-      _snack('The list is empty.');
+      _snack(s.listEmpty);
       return;
     }
     await Clipboard.setData(ClipboardData(text: store.exportText()));
-    if (mounted) _snack('Copied $n ${n == 1 ? 'task' : 'tasks'} to the clipboard');
+    if (mounted) _snack(s.copied(n));
   }
 
   void _toggleFind() => setState(() {
@@ -553,9 +554,6 @@ class _TodoScreenState extends State<TodoScreen>
                   ? null
                   : all.where((t) => t.completed).length / all.length,
           archivedCount: store.archived.length,
-          soundOn: store.soundOn,
-          hapticsOn: store.hapticsOn,
-          themeMode: store.themeMode,
           finding: _finding,
           onAdd: _add,
           onFind: _toggleFind,
@@ -563,10 +561,7 @@ class _TodoScreenState extends State<TodoScreen>
           onStats: () => showStatsSheet(context, store),
           onCopy: _copyList,
           onEmptyJar: _emptyJar,
-          onSound: store.setSound,
-          onHaptics: store.setHaptics,
-          onTheme: store.setThemeMode,
-          onGoal: store.setDailyGoal,
+          onSettings: () => showSettingsSheet(context, store),
         ),
         if (_finding)
           _FindBar(
@@ -585,11 +580,11 @@ class _TodoScreenState extends State<TodoScreen>
                       child: Column(
                         children: [
                           Text(
-                            'No task matches.',
+                            s.noMatch,
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 15, color: _palette.inkSoft),
                           ),
-                          TextButton(onPressed: _toggleFind, child: const Text('Clear search')),
+                          TextButton(onPressed: _toggleFind, child: Text(s.clearSearch)),
                         ],
                       ),
                     )
@@ -619,7 +614,7 @@ class _TodoScreenState extends State<TodoScreen>
   }
 }
 
-enum _MenuAction { archive, stats, copy, emptyJar, sound, haptics, theme, goal }
+enum _MenuAction { archive, stats, copy, emptyJar, settings }
 
 class _Header extends StatelessWidget {
   const _Header({
@@ -628,9 +623,6 @@ class _Header extends StatelessWidget {
     required this.dailyGoal,
     required this.progress,
     required this.archivedCount,
-    required this.soundOn,
-    required this.hapticsOn,
-    required this.themeMode,
     required this.finding,
     required this.onAdd,
     required this.onFind,
@@ -638,10 +630,7 @@ class _Header extends StatelessWidget {
     required this.onStats,
     required this.onCopy,
     required this.onEmptyJar,
-    required this.onSound,
-    required this.onHaptics,
-    required this.onTheme,
-    required this.onGoal,
+    required this.onSettings,
   });
 
   final int doneToday;
@@ -651,9 +640,6 @@ class _Header extends StatelessWidget {
   /// Share of the list that is finished; null when the list is empty.
   final double? progress;
   final int archivedCount;
-  final bool soundOn;
-  final bool hapticsOn;
-  final ThemeMode themeMode;
   final bool finding;
   final VoidCallback onAdd;
   final VoidCallback onFind;
@@ -661,29 +647,17 @@ class _Header extends StatelessWidget {
   final VoidCallback onStats;
   final VoidCallback onCopy;
   final VoidCallback onEmptyJar;
-  final ValueChanged<bool> onSound;
-  final ValueChanged<bool> onHaptics;
-  final ValueChanged<ThemeMode> onTheme;
-  final ValueChanged<int> onGoal;
-
-  /// Menu cycles through these; 0 = off.
-  static const _goals = [0, 1, 3, 5, 10];
-
-  static const _themeNames = {
-    ThemeMode.system: 'System',
-    ThemeMode.light: 'Light',
-    ThemeMode.dark: 'Dark',
-  };
+  final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
     final palette = Palette.of(context);
     final summary = [
       if (dailyGoal > 0)
-        '$doneToday of $dailyGoal done today'
+        s.doneOfGoal(doneToday, dailyGoal)
       else
-        doneToday == 0 ? 'Nothing done today yet' : '$doneToday done today',
-      if (streak > 1) '$streak-day streak',
+        doneToday == 0 ? s.nothingToday : s.doneToday(doneToday),
+      if (streak > 1) s.streak(streak),
     ].join(' · ');
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 8, 10),
@@ -695,7 +669,7 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'My tasks',
+                  s.myTasks,
                   style: TextStyle(
                     fontSize: 32,
                     height: 1.05,
@@ -717,8 +691,8 @@ class _Header extends StatelessWidget {
                   const SizedBox(height: 10),
                   Semantics(
                     label: dailyGoal > 0
-                        ? '${(p * 100).round()} percent of the daily goal'
-                        : '${(p * 100).round()} percent of the list finished',
+                        ? s.goalPercent((p * 100).round())
+                        : s.listPercent((p * 100).round()),
                     excludeSemantics: true,
                     child: TweenAnimationBuilder<double>(
                       tween: Tween(end: p),
@@ -740,13 +714,13 @@ class _Header extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: finding ? 'Close search' : 'Search and sort',
+            tooltip: finding ? s.closeSearch : s.searchAndSort,
             onPressed: onFind,
             icon:
                 Icon(finding ? Icons.search_off_rounded : Icons.search_rounded, color: palette.ink),
           ),
           IconButton.filled(
-            tooltip: 'Add task',
+            tooltip: s.addTask,
             onPressed: onAdd,
             style: IconButton.styleFrom(
               backgroundColor: palette.ink,
@@ -755,58 +729,22 @@ class _Header extends StatelessWidget {
             icon: const Icon(Icons.add_rounded),
           ),
           PopupMenuButton<_MenuAction>(
-            tooltip: 'More',
+            tooltip: s.more,
             icon: Icon(Icons.more_vert_rounded, color: palette.ink),
-            onSelected: (a) {
-              switch (a) {
-                case _MenuAction.archive:
-                  onOpenArchive();
-                case _MenuAction.stats:
-                  onStats();
-                case _MenuAction.copy:
-                  onCopy();
-                case _MenuAction.theme:
-                  onTheme(ThemeMode.values[(themeMode.index + 1) % ThemeMode.values.length]);
-                case _MenuAction.goal:
-                  onGoal(_goals[(_goals.indexOf(dailyGoal) + 1) % _goals.length]);
-                case _MenuAction.emptyJar:
-                  onEmptyJar();
-                case _MenuAction.sound:
-                  onSound(!soundOn);
-                case _MenuAction.haptics:
-                  onHaptics(!hapticsOn);
-              }
+            onSelected: (a) => switch (a) {
+              _MenuAction.archive => onOpenArchive(),
+              _MenuAction.stats => onStats(),
+              _MenuAction.copy => onCopy(),
+              _MenuAction.emptyJar => onEmptyJar(),
+              _MenuAction.settings => onSettings(),
             },
             itemBuilder: (context) => [
-              PopupMenuItem(
-                value: _MenuAction.archive,
-                child: Text(archivedCount == 0 ? 'Archive' : 'Archive ($archivedCount)'),
-              ),
-              const PopupMenuItem(value: _MenuAction.stats, child: Text('Stats')),
-              const PopupMenuItem(value: _MenuAction.copy, child: Text('Copy list')),
-              const PopupMenuItem(
-                value: _MenuAction.emptyJar,
-                child: Text('Empty the jar'),
-              ),
+              _item(_MenuAction.archive, Icons.inventory_2_outlined, s.archiveCount(archivedCount)),
+              _item(_MenuAction.stats, Icons.bar_chart_rounded, s.stats),
+              _item(_MenuAction.copy, Icons.copy_rounded, s.copyList),
+              _item(_MenuAction.emptyJar, Icons.delete_sweep_outlined, s.emptyTheJar),
               const PopupMenuDivider(),
-              CheckedPopupMenuItem(
-                value: _MenuAction.sound,
-                checked: soundOn,
-                child: const Text('Sound'),
-              ),
-              CheckedPopupMenuItem(
-                value: _MenuAction.haptics,
-                checked: hapticsOn,
-                child: const Text('Vibration'),
-              ),
-              PopupMenuItem(
-                value: _MenuAction.goal,
-                child: Text('Daily goal: ${dailyGoal == 0 ? 'Off' : dailyGoal}'),
-              ),
-              PopupMenuItem(
-                value: _MenuAction.theme,
-                child: Text('Theme: ${_themeNames[themeMode]}'),
-              ),
+              _item(_MenuAction.settings, Icons.tune_rounded, s.settings),
             ],
           ),
         ],
@@ -814,6 +752,11 @@ class _Header extends StatelessWidget {
     );
   }
 }
+
+PopupMenuItem<_MenuAction> _item(_MenuAction value, IconData icon, String label) => PopupMenuItem(
+      value: value,
+      child: Row(children: [Icon(icon, size: 20), const SizedBox(width: 14), Text(label)]),
+    );
 
 /// Old text slides up and out as the new one slides in.
 class _RollingText extends StatelessWidget {
@@ -855,28 +798,17 @@ class _StrataLegend extends StatelessWidget {
 
   final Palette palette;
 
-  static const _initials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  static const _names = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday'
-  ];
-
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now().weekday - 1;
     return Semantics(
-      label: 'Letters finished on ${_names[today]} settle in this colour',
+      label: s.legend(s.weekdays[today]),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           for (var i = 0; i < 7; i++)
             Tooltip(
-              message: _names[i],
+              message: s.weekdays[i],
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2.5),
                 child: Column(
@@ -893,7 +825,7 @@ class _StrataLegend extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _initials[i],
+                      s.weekdayInitials[i],
                       style: TextStyle(
                         fontSize: 9,
                         height: 1,
@@ -938,7 +870,7 @@ class _FindBar extends StatelessWidget {
             onChanged: onQuery,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
-              hintText: 'Search tasks',
+              hintText: s.searchTasks,
               prefixIcon: const Icon(Icons.search_rounded),
               isDense: true,
               filled: true,
@@ -952,10 +884,10 @@ class _FindBar extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              for (final (value, label) in const [
-                (_Show.all, 'All'),
-                (_Show.open, 'Open'),
-                (_Show.done, 'Done'),
+              for (final (value, label) in [
+                (_Show.all, s.showAll),
+                (_Show.open, s.showOpen),
+                (_Show.done, s.showDone),
               ])
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
@@ -971,10 +903,10 @@ class _FindBar extends StatelessWidget {
                 value: sort,
                 underline: const SizedBox.shrink(),
                 onChanged: (v) => onSort(v!),
-                items: const [
-                  DropdownMenuItem(value: _Sort.manual, child: Text('Newest')),
-                  DropdownMenuItem(value: _Sort.priority, child: Text('Priority')),
-                  DropdownMenuItem(value: _Sort.due, child: Text('Due date')),
+                items: [
+                  DropdownMenuItem(value: _Sort.manual, child: Text(s.sortNewest)),
+                  DropdownMenuItem(value: _Sort.priority, child: Text(s.sortPriority)),
+                  DropdownMenuItem(value: _Sort.due, child: Text(s.sortDue)),
                 ],
               ),
             ],
@@ -1001,20 +933,20 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Nothing on the list',
+              s.nothingOnList,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: palette.ink),
             ),
             const SizedBox(height: 8),
             Text(
-              'Add a task, then check it off to drop its letters into the jar.',
+              s.emptyHint,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15, height: 1.4, color: palette.inkSoft),
             ),
             const SizedBox(height: 18),
-            FilledButton(onPressed: onAdd, child: const Text('Add task')),
+            FilledButton(onPressed: onAdd, child: Text(s.addTask)),
             const SizedBox(height: 14),
             Text(
-              'Long-press a task to edit · swipe to delete · shake to empty the jar',
+              s.gestureHint,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12.5, height: 1.4, color: palette.inkSoft),
             ),
