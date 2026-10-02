@@ -18,6 +18,9 @@ class TodoStore extends ChangeNotifier {
   bool hapticsOn = true;
   ThemeMode themeMode = ThemeMode.system;
 
+  /// Tasks to finish per day; 0 = no goal.
+  int dailyGoal = 0;
+
   /// Pile snapshot from the last session, consumed once by the screen.
   Map<String, dynamic>? savedPile;
 
@@ -87,6 +90,7 @@ class TodoStore extends ChangeNotifier {
       (m) => m.name == s.theme,
       orElse: () => ThemeMode.system,
     );
+    dailyGoal = s.dailyGoal;
     loaded = true;
     notifyListeners();
     if (s.firstRun) _persist();
@@ -217,12 +221,18 @@ class TodoStore extends ChangeNotifier {
     _settingsChanged();
   }
 
+  void setDailyGoal(int goal) {
+    dailyGoal = goal;
+    _settingsChanged();
+  }
+
   void _settingsChanged() {
     notifyListeners();
     unawaited(_save(_storage.saveSettings(
       soundOn: soundOn,
       hapticsOn: hapticsOn,
       theme: themeMode.name,
+      dailyGoal: dailyGoal,
     )));
   }
 

@@ -12,6 +12,7 @@ class StoredState {
     required this.soundOn,
     required this.hapticsOn,
     required this.theme,
+    required this.dailyGoal,
     required this.firstRun,
   });
 
@@ -21,6 +22,9 @@ class StoredState {
   final bool soundOn;
   final bool hapticsOn;
   final String? theme;
+
+  /// Tasks to finish per day; 0 = no goal.
+  final int dailyGoal;
   final bool firstRun;
 }
 
@@ -32,6 +36,7 @@ class Storage {
   static const _kSound = 'sound';
   static const _kHaptics = 'haptics';
   static const _kTheme = 'theme';
+  static const _kGoal = 'dailyGoal';
 
   SharedPreferences? _prefs;
 
@@ -45,6 +50,7 @@ class Storage {
       soundOn: prefs.getBool(_kSound) ?? true,
       hapticsOn: prefs.getBool(_kHaptics) ?? true,
       theme: prefs.getString(_kTheme),
+      dailyGoal: prefs.getInt(_kGoal) ?? 0,
       firstRun: rawTodos == null,
     );
   }
@@ -64,11 +70,13 @@ class Storage {
     required bool soundOn,
     required bool hapticsOn,
     required String theme,
+    required int dailyGoal,
   }) async {
     final prefs = _prefs ??= await SharedPreferences.getInstance();
     await prefs.setBool(_kSound, soundOn);
     await prefs.setBool(_kHaptics, hapticsOn);
     await prefs.setString(_kTheme, theme);
+    await prefs.setInt(_kGoal, dailyGoal);
   }
 
   /// A bad entry is skipped, not allowed to wipe the whole list. If the

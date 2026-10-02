@@ -41,6 +41,9 @@ class _TodoScreenState extends State<TodoScreen>
   final ScrollController _scroll = ScrollController();
   final Map<int, GlobalKey<TaskTextState>> _textKeys = {};
 
+  /// Rows already shown once; anything else gets an entrance animation.
+  final Set<int> _seen = {};
+
   late final MotionSensor _sensor = MotionSensor(onShake: _onShake, onTilt: _onTilt);
   late final Ticker _ticker = createTicker(_onTick);
 
@@ -289,11 +292,22 @@ class _TodoScreenState extends State<TodoScreen>
         );
       }
       store.setCompleted(todo.id, true);
+      if (store.todos.every((t) => t.completed)) {
+        _celebrate('All done. Enjoy the quiet.');
+      } else if (store.dailyGoal > 0 && store.doneToday() == store.dailyGoal) {
+        _celebrate('Daily goal reached: ${store.dailyGoal} done today.');
+      }
     } else {
       _world.startReturn(todo.id);
       store.setCompleted(todo.id, false);
       _scheduleSave();
     }
+  }
+
+  void _celebrate(String message) {
+    _world.celebrate(_palette.strata);
+    _feedback.heavy();
+    _snack(message);
   }
 
   Future<void> _add() async {
@@ -458,56 +472,66 @@ class _TodoScreenState extends State<TodoScreen>
     return Scaffold(
       // The keyboard must not squash the jar and launch the pile upward.
       resizeToAvoidBottomInset: false,
-      body: SafeArea(
-        bottom: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final size = constraints.biggest;
-            _world
-              ..size = size
-              ..floorInset = bottomPad + 18;
-            if (size != _lastSize) {
-              _lastSize = size;
-              _world.wake(0.5);
-            }
-            return Stack(
-              key: _stackKey,
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: JarPainter(
-                      floorY: _world.floorY,
-                      color: _palette.inkSoft.withAlpha(110),
-                      inset: _world.left,
+      // A faint wash of today's layer colour behind everything.
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: const Alignment(-1, -1),
+            radius: 1.4,
+            colors: [_palette.strataFor(DateTime.now()).withAlpha(46), _palette.glass.withAlpha(0)],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final size = constraints.biggest;
+              _world
+                ..size = size
+                ..floorInset = bottomPad + 18;
+              if (size != _lastSize) {
+                _lastSize = size;
+                _world.wake(0.5);
+              }
+              return Stack(
+                key: _stackKey,
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: JarPainter(
+                        floorY: _world.floorY,
+                        color: _palette.inkSoft.withAlpha(110),
+                        inset: _world.left,
+                      ),
                     ),
                   ),
-                ),
-                Positioned.fill(
-                  child: ListenableBuilder(
-                    listenable: Listenable.merge([store, _world.membership]),
-                    builder: (context, _) => _content(bottomPad),
-                  ),
-                ),
-                Positioned.fill(
-                  // The pile is only paint; tell screen readers what is in it.
-                  child: ListenableBuilder(
-                    listenable: store,
-                    builder: (context, child) => Semantics(
-                      container: true,
-                      label: _jarLabel(),
-                      child: child,
-                    ),
-                    child: ParticleLayer(
-                      world: _world,
-                      glyphs: _glyphs,
-                      ink: _palette.ink,
-                      onPoke: () => _feedback.impact(420),
+                  Positioned.fill(
+                    child: ListenableBuilder(
+                      listenable: Listenable.merge([store, _world.membership]),
+                      builder: (context, _) => _content(bottomPad),
                     ),
                   ),
-                ),
-              ],
-            );
-          },
+                  Positioned.fill(
+                    // The pile is only paint; tell screen readers what is in it.
+                    child: ListenableBuilder(
+                      listenable: store,
+                      builder: (context, child) => Semantics(
+                        container: true,
+                        label: _jarLabel(),
+                        child: child,
+                      ),
+                      child: ParticleLayer(
+                        world: _world,
+                        glyphs: _glyphs,
+                        ink: _palette.ink,
+                        onPoke: () => _feedback.impact(420),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -522,6 +546,13 @@ class _TodoScreenState extends State<TodoScreen>
         _Header(
           doneToday: store.doneToday(),
           streak: store.streak(),
+          dailyGoal: store.dailyGoal,
+          // With a goal the bar tracks today against it, else the whole list.
+          progress: store.dailyGoal > 0
+              ? math.min(store.doneToday() / store.dailyGoal, 1.0)
+              : all.isEmpty
+                  ? null
+                  : all.where((t) => t.completed).length / all.length,
           archivedCount: store.archived.length,
           soundOn: store.soundOn,
           hapticsOn: store.hapticsOn,
@@ -536,6 +567,7 @@ class _TodoScreenState extends State<TodoScreen>
           onSound: store.setSound,
           onHaptics: store.setHaptics,
           onTheme: store.setThemeMode,
+          onGoal: store.setDailyGoal,
         ),
         if (_finding)
           _FindBar(
@@ -568,7 +600,10 @@ class _TodoScreenState extends State<TodoScreen>
                       itemCount: todos.length,
                       itemBuilder: (context, i) {
                         final t = todos[i];
+                        // First launch staggers the rows in; later adds just slide in.
+                        final fresh = _seen.add(t.id) && !MediaQuery.disableAnimationsOf(context);
                         return TodoTile(
+                          enterDelay: fresh ? Duration(milliseconds: 45 * math.min(i, 10)) : null,
                           key: ValueKey(t.id),
                           todo: t,
                           textKey: _keyFor(t.id),
@@ -585,12 +620,14 @@ class _TodoScreenState extends State<TodoScreen>
   }
 }
 
-enum _MenuAction { archive, stats, copy, emptyJar, sound, haptics, theme }
+enum _MenuAction { archive, stats, copy, emptyJar, sound, haptics, theme, goal }
 
 class _Header extends StatelessWidget {
   const _Header({
     required this.doneToday,
     required this.streak,
+    required this.dailyGoal,
+    required this.progress,
     required this.archivedCount,
     required this.soundOn,
     required this.hapticsOn,
@@ -605,10 +642,15 @@ class _Header extends StatelessWidget {
     required this.onSound,
     required this.onHaptics,
     required this.onTheme,
+    required this.onGoal,
   });
 
   final int doneToday;
   final int streak;
+  final int dailyGoal;
+
+  /// Share of the list that is finished; null when the list is empty.
+  final double? progress;
   final int archivedCount;
   final bool soundOn;
   final bool hapticsOn;
@@ -623,6 +665,10 @@ class _Header extends StatelessWidget {
   final ValueChanged<bool> onSound;
   final ValueChanged<bool> onHaptics;
   final ValueChanged<ThemeMode> onTheme;
+  final ValueChanged<int> onGoal;
+
+  /// Menu cycles through these; 0 = off.
+  static const _goals = [0, 1, 3, 5, 10];
 
   static const _themeNames = {
     ThemeMode.system: 'System',
@@ -633,6 +679,13 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Palette.of(context);
+    final summary = [
+      if (dailyGoal > 0)
+        '$doneToday of $dailyGoal done today'
+      else
+        doneToday == 0 ? 'Nothing done today yet' : '$doneToday done today',
+      if (streak > 1) '$streak-day streak',
+    ].join(' · ');
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 8, 10),
       child: Row(
@@ -656,21 +709,34 @@ class _Header extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Flexible(
-                      child: Text(
-                        [
-                          doneToday == 0 ? 'Nothing done today yet' : '$doneToday done today',
-                          if (streak > 1) '$streak-day streak',
-                        ].join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13.5, color: palette.inkSoft),
-                      ),
-                    ),
+                    Flexible(child: _RollingText(summary, palette.inkSoft)),
                     const SizedBox(width: 14),
                     _StrataLegend(palette: palette),
                   ],
                 ),
+                if (progress case final p?) ...[
+                  const SizedBox(height: 10),
+                  Semantics(
+                    label: dailyGoal > 0
+                        ? '${(p * 100).round()} percent of the daily goal'
+                        : '${(p * 100).round()} percent of the list finished',
+                    excludeSemantics: true,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(end: p),
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, v, _) => ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LinearProgressIndicator(
+                          value: v,
+                          minHeight: 4,
+                          color: palette.strataFor(DateTime.now()),
+                          backgroundColor: palette.hairline.withAlpha(110),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -702,6 +768,8 @@ class _Header extends StatelessWidget {
                   onCopy();
                 case _MenuAction.theme:
                   onTheme(ThemeMode.values[(themeMode.index + 1) % ThemeMode.values.length]);
+                case _MenuAction.goal:
+                  onGoal(_goals[(_goals.indexOf(dailyGoal) + 1) % _goals.length]);
                 case _MenuAction.emptyJar:
                   onEmptyJar();
                 case _MenuAction.sound:
@@ -733,12 +801,50 @@ class _Header extends StatelessWidget {
                 child: const Text('Vibration'),
               ),
               PopupMenuItem(
+                value: _MenuAction.goal,
+                child: Text('Daily goal: ${dailyGoal == 0 ? 'Off' : dailyGoal}'),
+              ),
+              PopupMenuItem(
                 value: _MenuAction.theme,
                 child: Text('Theme: ${_themeNames[themeMode]}'),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Old text slides up and out as the new one slides in.
+class _RollingText extends StatelessWidget {
+  const _RollingText(this.text, this.color);
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      layoutBuilder: (current, previous) => Stack(
+          alignment: Alignment.centerLeft, children: [...previous, if (current != null) current]),
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: SlideTransition(
+          position: Tween(
+            begin: Offset(0, child.key == ValueKey(text) ? 0.6 : -0.6),
+            end: Offset.zero,
+          ).animate(anim),
+          child: child,
+        ),
+      ),
+      child: Text(
+        text,
+        key: ValueKey(text),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 13.5, color: color),
       ),
     );
   }

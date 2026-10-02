@@ -143,6 +143,18 @@ void main() {
       expect(store.exportText(), '- [x] t1\n- [ ] open');
     });
 
+    test('daily goal persists', () async {
+      SharedPreferences.setMockInitialValues({});
+      final s = TodoStore(Storage());
+      await s.load();
+      expect(s.dailyGoal, 0);
+      s.setDailyGoal(5);
+      await Future<void>.delayed(Duration.zero);
+      final again = TodoStore(Storage());
+      await again.load();
+      expect(again.dailyGoal, 5);
+    });
+
     test('delete one archived task, theme persists', () async {
       final store = await _emptyStore();
       final a = store.add('a', Priority.normal);
@@ -221,6 +233,17 @@ void main() {
       w.step(1 / 60);
       expect((ps.first.x, ps.first.y), isNot(before.first), reason: 'first letter leaves at once');
       expect((ps.last.x, ps.last.y), before.last, reason: 'last letter is still waiting');
+    });
+
+    test('celebrate keeps the world awake until the confetti fades', () {
+      final w = world()..celebrate(const [Color(0xFFFF0000)]);
+      expect(w.dust, isNotEmpty);
+      expect(w.isIdle, isFalse);
+      for (var i = 0; i < 180; i++) {
+        w.step(1 / 60);
+      }
+      expect(w.dust, isEmpty);
+      expect(w.isIdle, isTrue);
     });
   });
 }

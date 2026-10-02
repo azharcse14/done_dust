@@ -89,9 +89,7 @@ class ParticleWorld extends ChangeNotifier {
 
   /// Whether a tilt change should wake a sleeping jar.
   bool tiltWouldWake(double tx, double ty) =>
-      _asleep &&
-      ((tx - _sleepTiltX).abs() > _K.tiltWake ||
-          (ty - _sleepTiltY).abs() > _K.tiltWake);
+      _asleep && ((tx - _sleepTiltX).abs() > _K.tiltWake || (ty - _sleepTiltY).abs() > _K.tiltWake);
 
   void wake([double seconds = 0]) {
     _asleep = false;
@@ -604,17 +602,13 @@ class ParticleWorld extends ChangeNotifier {
 
   bool _offScreen(TaskParticles g) {
     for (final p in g.particles) {
-      final inside = p.x > -60 &&
-          p.x < size.width + 60 &&
-          p.y > -60 &&
-          p.y < size.height + 80;
+      final inside = p.x > -60 && p.x < size.width + 60 && p.y > -60 && p.y < size.height + 80;
       if (inside) return false;
     }
     return true;
   }
 
-  double _invMass(Particle p) =>
-      identical(p, _grabbed) ? 0.15 : p.material.invMass;
+  double _invMass(Particle p) => identical(p, _grabbed) ? 0.15 : p.material.invMass;
 
   void _fillJar() {
     _jar.clear();
@@ -838,6 +832,25 @@ class ParticleWorld extends ChangeNotifier {
         color: color,
       ));
     }
+  }
+
+  /// Every task done: a burst of coloured dust shot up from the floor.
+  void celebrate(List<Color> colors) {
+    if (size.isEmpty || colors.isEmpty) return;
+    for (var k = 0; k < 90; k++) {
+      final a = -math.pi / 2 + (_rand.nextDouble() - 0.5) * 1.1;
+      final v = 900 + _rand.nextDouble() * 700;
+      dust.add(Dust(
+        x: left + _rand.nextDouble() * (right - left),
+        y: floorY,
+        vx: math.cos(a) * v,
+        vy: math.sin(a) * v,
+        life: 1.1 + _rand.nextDouble() * 0.9,
+        size: 1.8 + _rand.nextDouble() * 2.4,
+        color: colors[k % colors.length],
+      ));
+    }
+    wake();
   }
 
   void _updateDust(double dt) {

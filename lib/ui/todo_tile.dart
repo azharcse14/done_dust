@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
@@ -15,6 +17,7 @@ class TodoTile extends StatelessWidget {
     required this.onToggle,
     required this.onEdit,
     required this.onSwiped,
+    this.enterDelay,
   });
 
   final Todo todo;
@@ -25,6 +28,10 @@ class TodoTile extends StatelessWidget {
 
   /// [direction] is +1 for a swipe to the right, -1 to the left.
   final void Function(double direction, double velocity) onSwiped;
+
+  /// Set for a row that is new on screen: it fades and slides in after
+  /// this delay. Null = already shown, no entrance.
+  final Duration? enterDelay;
 
   @override
   Widget build(BuildContext context) {
@@ -99,11 +106,26 @@ class TodoTile extends StatelessWidget {
     );
 
     // Swiping is the only way to delete; screen readers get it as an action.
-    return Semantics(
+    final tile = Semantics(
       customSemanticsActions: {
         const CustomSemanticsAction(label: 'Delete'): () => onSwiped(1, 0),
       },
       child: row,
+    );
+
+    // Always wrapped, so the tree (and the TaskText key) never changes shape.
+    final delay = enterDelay ?? Duration.zero;
+    const run = Duration(milliseconds: 380);
+    final total = delay + run;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: enterDelay == null ? 1 : 0, end: 1),
+      duration: total,
+      curve: Interval(delay.inMicroseconds / total.inMicroseconds, 1, curve: Curves.easeOutCubic),
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(offset: Offset(0, (1 - t) * 18), child: child),
+      ),
+      child: tile,
     );
   }
 }
@@ -126,19 +148,30 @@ class _Check extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // t runs 0 → 1 on check and back on uncheck; the box swells midway.
     return Semantics(
       checked: checked,
       label: label,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 22,
-        height: 22,
-        decoration: BoxDecoration(
-          color: checked ? fill : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: checked ? fill : outline.withAlpha(150), width: 1.6),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: checked ? 1 : 0),
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOut,
+        builder: (context, t, _) => Transform.scale(
+          scale: 1 + 0.3 * math.sin(math.pi * t),
+          child: Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              color: Color.lerp(Colors.transparent, fill, t),
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(color: Color.lerp(outline.withAlpha(150), fill, t)!, width: 1.6),
+            ),
+            child: t == 0
+                ? null
+                : Transform.scale(
+                    scale: t, child: Icon(Icons.check_rounded, size: 16, color: mark)),
+          ),
         ),
-        child: checked ? Icon(Icons.check_rounded, size: 16, color: mark) : null,
       ),
     );
   }
