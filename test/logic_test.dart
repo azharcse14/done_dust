@@ -10,6 +10,7 @@ import 'package:physics_todo/physics/particle.dart';
 import 'package:physics_todo/physics/particle_world.dart';
 import 'package:physics_todo/services/storage.dart';
 import 'package:physics_todo/state/todo_store.dart';
+import 'package:physics_todo/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<TodoStore> _emptyStore() async {
@@ -450,5 +451,49 @@ void main() {
   test('weekCompare shows the change against last week', () {
     expect(const S(false).weekCompare(6, 4), 'This week 6 · last week 4 (+50%)');
     expect(const S(true).weekCompare(2, 4), 'এই সপ্তাহে ২ · গত সপ্তাহে ৪ (−৫০%)');
+  });
+
+  group('Backup, restore all, jar style', () {
+    test('a backup restores list and archive; junk changes nothing', () async {
+      final store = await _emptyStore();
+      final a = store.add('keep me', Priority.high, note: 'n');
+      store.setCompleted(store.add('old', Priority.low).id, true);
+      store.archive(store.todos.where((t) => t.completed).map((t) => t.id));
+      final backup = store.exportBackup();
+
+      store.delete(a.id);
+      expect(store.importBackup('{"todos": []}'), isFalse);
+      expect(store.importBackup('not json'), isFalse);
+      expect(store.todos, isEmpty);
+
+      expect(store.importBackup(backup), isTrue);
+      expect(store.todos.single.text, 'keep me');
+      expect(store.todos.single.note, 'n');
+      expect(store.archived.single.text, 'old');
+      expect(store.restores, 1);
+    });
+
+    test('restore all reopens every archived task', () async {
+      final store = await _emptyStore();
+      final t = store.add('x', Priority.normal);
+      store.setCompleted(t.id, true);
+      store.archive([t.id]);
+      store.reopenAllArchived();
+      expect(store.archived, isEmpty);
+      expect(store.todos.single.completed, isFalse);
+    });
+
+    test('jar style persists and swaps only the strata colours', () async {
+      final store = await _emptyStore();
+      store.setJarStyle(JarStyle.ocean);
+      await Future<void>.delayed(Duration.zero);
+      final again = TodoStore(Storage());
+      await again.load();
+      expect(again.jarStyle, JarStyle.ocean);
+      final p = Palette.forStyle(Brightness.light, JarStyle.ocean);
+      expect(p.ink, Palette.light.ink);
+      expect(p.strata, isNot(Palette.light.strata));
+      expect(Palette.forStyle(Brightness.dark, JarStyle.weekdays), same(Palette.dark));
+    });
   });
 }

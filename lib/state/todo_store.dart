@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -8,6 +9,7 @@ import '../l10n.dart';
 import '../models/todo.dart';
 import '../services/reminders.dart';
 import '../services/storage.dart';
+import '../theme.dart' show JarStyle;
 
 class TodoStore extends ChangeNotifier {
   TodoStore(this._storage, [this._reminders]);
@@ -25,6 +27,7 @@ class TodoStore extends ChangeNotifier {
   String language = 'system';
 
   bool remindersOn = false;
+  JarStyle jarStyle = JarStyle.weekdays;
 
   /// The system refused notifications the last time they were switched on.
   bool remindersBlocked = false;
@@ -164,6 +167,8 @@ class TodoStore extends ChangeNotifier {
     setLanguage(s.language ?? 'system', save: false);
     remindersOn = s.remindersOn;
     _savedBestStreak = s.bestStreak;
+    jarStyle =
+        JarStyle.values.firstWhere((j) => j.name == s.jarStyle, orElse: () => JarStyle.weekdays);
     _syncReminders();
     loaded = true;
     notifyListeners();
@@ -340,6 +345,44 @@ class TodoStore extends ChangeNotifier {
     _changed();
   }
 
+  /// Puts every archived task back on the list as an open task.
+  void reopenAllArchived() {
+    _todos = [for (final t in _archived) t.copyWith(reopen: true), ..._todos];
+    _archived = [];
+    _changed();
+  }
+
+  /// Bumped when a backup replaces everything, so the jar can be rebuilt.
+  int restores = 0;
+
+  /// The whole list and archive as JSON, for the clipboard.
+  String exportBackup() => jsonEncode({
+        'app': 'done_dust',
+        'version': 1,
+        'todos': [for (final t in _todos) t.toJson()],
+        'archive': [for (final t in _archived) t.toJson()],
+      });
+
+  /// Replaces list and archive with a backup. Returns false (and changes
+  /// nothing) unless [raw] is a Done Dust backup.
+  bool importBackup(String raw) {
+    try {
+      final map = jsonDecode(raw.trim());
+      if (map is! Map || map['app'] != 'done_dust') return false;
+      List<Todo> read(Object? list) =>
+          [for (final t in list as List) Todo.fromJson((t as Map).cast<String, dynamic>())];
+      final todos = read(map['todos']);
+      final archived = read(map['archive']);
+      _todos = todos;
+      _archived = archived;
+    } catch (_) {
+      return false;
+    }
+    restores++;
+    _changed();
+    return true;
+  }
+
   void clearArchive() {
     _archived = [];
     _changed();
@@ -401,6 +444,11 @@ class TodoStore extends ChangeNotifier {
     });
   }
 
+  void setJarStyle(JarStyle style) {
+    jarStyle = style;
+    _settingsChanged();
+  }
+
   void setDailyGoal(int goal) {
     dailyGoal = goal;
     _settingsChanged();
@@ -414,6 +462,7 @@ class TodoStore extends ChangeNotifier {
       theme: themeMode.name,
       language: language,
       remindersOn: remindersOn,
+      jarStyle: jarStyle.name,
       dailyGoal: dailyGoal,
     )));
   }

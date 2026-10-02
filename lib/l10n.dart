@@ -168,6 +168,29 @@ class S {
   String get smartDateHint => _t('Tip: end with “tomorrow” or “fri” to set a date',
       'টিপ: শেষে “আগামীকাল” বা “শুক্রবার” লিখলে তারিখ বসবে');
 
+  String get jarStyle => _t('Jar colours', 'বয়ামের রং');
+  String get jarStyleHint => _t('for newly finished tasks', 'নতুন শেষ করা কাজের জন্য');
+  String jarStyleName(int i) => bn
+      ? const ['সপ্তাহের দিন', 'সূর্যাস্ত', 'সাগর', 'এক রং'][i]
+      : const ['Weekdays', 'Sunset', 'Ocean', 'Mono'][i];
+  String get backup => _t('Backup', 'ব্যাকআপ');
+  String get copyBackup => _t('Copy backup', 'ব্যাকআপ কপি করুন');
+  String get restoreFromClipboard => _t('Restore from clipboard', 'ক্লিপবোর্ড থেকে ফেরান');
+  String get backupCopied => _t('Backup copied. Paste it somewhere safe.',
+      'ব্যাকআপ কপি হয়েছে। নিরাপদ কোথাও পেস্ট করে রাখুন।');
+  String get restoreQ => _t('Restore this backup?', 'এই ব্যাকআপ ফেরাবেন?');
+  String get restoreBody => _t(
+      'Your current list and archive will be replaced by the backup on the clipboard.',
+      'আপনার এখনকার তালিকা ও আর্কাইভ ক্লিপবোর্ডের ব্যাকআপ দিয়ে বদলে যাবে।');
+  String get restore => _t('Restore', 'ফেরান');
+  String get restored => _t('Backup restored.', 'ব্যাকআপ ফেরানো হয়েছে।');
+  String get notABackup =>
+      _t('The clipboard has no Done Dust backup.', 'ক্লিপবোর্ডে কোনো Done Dust ব্যাকআপ নেই।');
+  String get restoreAll => _t('Restore all', 'সব ফেরান');
+  String get restoreAllQ => _t('Put every archived task back?', 'আর্কাইভের সব কাজ ফেরাবেন?');
+  String get restoreAllBody =>
+      _t('They return to your list as open tasks.', 'কাজগুলো তালিকায় আবার খোলা কাজ হিসেবে ফিরবে।');
+
   // Archive
   String get deletedFromArchive => _t('Deleted from archive', 'আর্কাইভ থেকে মুছে ফেলা হয়েছে');
   String get clearArchiveQ => _t('Clear the archive?', 'আর্কাইভ খালি করবেন?');

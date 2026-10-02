@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n.dart';
 import '../services/reminders.dart';
@@ -20,12 +21,45 @@ Future<void> showSettingsSheet(BuildContext context, TodoStore store) {
   );
 }
 
-class _Settings extends StatelessWidget {
+class _Settings extends StatefulWidget {
   const _Settings({required this.store});
 
   final TodoStore store;
 
+  @override
+  State<_Settings> createState() => _SettingsState();
+}
+
+class _SettingsState extends State<_Settings> {
   static const _goals = [0, 1, 3, 5, 10];
+
+  /// Result of the last backup action, shown under its buttons.
+  String? _backupStatus;
+
+  TodoStore get store => widget.store;
+
+  Future<void> _copyBackup() async {
+    await Clipboard.setData(ClipboardData(text: store.exportBackup()));
+    if (mounted) setState(() => _backupStatus = s.backupCopied);
+  }
+
+  Future<void> _restore() async {
+    final raw = (await Clipboard.getData(Clipboard.kTextPlain))?.text ?? '';
+    if (!mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(s.restoreQ),
+        content: Text(s.restoreBody),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(s.keep)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(s.restore)),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _backupStatus = store.importBackup(raw) ? s.restored : s.notABackup);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,9 +139,70 @@ class _Settings extends StatelessWidget {
             label(s.language),
             choice({'system': s.themeSystem, 'en': 'English', 'bn': 'বাংলা'}, store.language,
                 store.setLanguage),
+            label('${s.jarStyle} · ${s.jarStyleHint}'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final style in JarStyle.values)
+                  ChoiceChip(
+                    avatar: _Swatch(Palette.forStyle(Theme.of(context).brightness, style).strata),
+                    label: Text(s.jarStyleName(style.index)),
+                    selected: store.jarStyle == style,
+                    showCheckmark: false,
+                    onSelected: (_) => store.setJarStyle(style),
+                  ),
+              ],
+            ),
+            label(s.backup),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _copyBackup,
+                  icon: const Icon(Icons.content_copy_rounded, size: 18),
+                  label: Text(s.copyBackup),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _restore,
+                  icon: const Icon(Icons.content_paste_rounded, size: 18),
+                  label: Text(s.restoreFromClipboard),
+                ),
+              ],
+            ),
+            if (_backupStatus case final status?)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                child: Text(status, style: TextStyle(color: palette.inkSoft, fontSize: 13)),
+              ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A row of three of the style's colours, as a chip avatar.
+class _Swatch extends StatelessWidget {
+  const _Swatch(this.colors);
+
+  final List<Color> colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final (i, c) in [colors[0], colors[3], colors[5]].indexed)
+          Container(
+            width: 5,
+            height: 16,
+            // Chip avatars get 18px; three bars and two gaps fit in 17.
+            margin: EdgeInsets.only(left: i == 0 ? 0 : 1),
+            decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(2)),
+          ),
+      ],
     );
   }
 }

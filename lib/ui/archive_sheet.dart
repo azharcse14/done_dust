@@ -57,19 +57,19 @@ class _ArchiveListState extends State<_ArchiveList> {
       ));
   }
 
-  Future<void> _confirmClear(BuildContext context) async {
+  Future<bool> _confirm(String title, String body, String action) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(s.clearArchiveQ),
-        content: Text(s.clearArchiveBody),
+        title: Text(title),
+        content: Text(body),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text(s.keep)),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(s.clearArchive)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(action)),
         ],
       ),
     );
-    if (ok == true) store.clearArchive();
+    return ok == true;
   }
 
   @override
@@ -100,9 +100,37 @@ class _ArchiveListState extends State<_ArchiveList> {
                 ),
               ),
               if (all.isNotEmpty)
-                TextButton(
-                  onPressed: () => _confirmClear(context),
-                  child: Text(s.clearArchive),
+                PopupMenuButton<bool>(
+                  tooltip: s.more,
+                  icon: Icon(Icons.more_vert_rounded, color: palette.ink),
+                  onSelected: (restore) async {
+                    if (restore) {
+                      if (await _confirm(s.restoreAllQ, s.restoreAllBody, s.restoreAll)) {
+                        store.reopenAllArchived();
+                      }
+                    } else if (await _confirm(
+                        s.clearArchiveQ, s.clearArchiveBody, s.clearArchive)) {
+                      store.clearArchive();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: true,
+                      child: Row(children: [
+                        const Icon(Icons.unarchive_outlined, size: 20),
+                        const SizedBox(width: 14),
+                        Flexible(child: Text(s.restoreAll)),
+                      ]),
+                    ),
+                    PopupMenuItem(
+                      value: false,
+                      child: Row(children: [
+                        const Icon(Icons.delete_forever_outlined, size: 20),
+                        const SizedBox(width: 14),
+                        Flexible(child: Text(s.clearArchive)),
+                      ]),
+                    ),
+                  ],
                 ),
             ],
           ),

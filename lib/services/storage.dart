@@ -15,6 +15,7 @@ class StoredState {
     required this.language,
     required this.remindersOn,
     required this.bestStreak,
+    required this.jarStyle,
     required this.dailyGoal,
     required this.firstRun,
   });
@@ -28,6 +29,7 @@ class StoredState {
   final String? language;
   final bool remindersOn;
   final int bestStreak;
+  final String? jarStyle;
 
   /// Tasks to finish per day; 0 = no goal.
   final int dailyGoal;
@@ -51,6 +53,7 @@ class Storage {
   static const _kLanguage = 'language';
   static const _kReminders = 'reminders';
   static const _kBestStreak = 'bestStreak';
+  static const _kJarStyle = 'jarStyle';
 
   SharedPreferences? _prefs;
 
@@ -77,6 +80,7 @@ class Storage {
       language: prefs.getString(_kLanguage),
       remindersOn: prefs.getBool(_kReminders) ?? false,
       bestStreak: prefs.getInt(_kBestStreak) ?? 0,
+      jarStyle: prefs.getString(_kJarStyle),
       dailyGoal: prefs.getInt(_kGoal) ?? 0,
       firstRun: rawTasks == null && prefs.getString(_kTodos) == null,
     );
@@ -109,6 +113,7 @@ class Storage {
     required String theme,
     required String language,
     required bool remindersOn,
+    required String jarStyle,
     required int dailyGoal,
   }) async {
     final prefs = _prefs ??= await SharedPreferences.getInstance();
@@ -117,6 +122,7 @@ class Storage {
     await prefs.setString(_kTheme, theme);
     await prefs.setString(_kLanguage, language);
     await prefs.setBool(_kReminders, remindersOn);
+    await prefs.setString(_kJarStyle, jarStyle);
     await prefs.setInt(_kGoal, dailyGoal);
   }
 

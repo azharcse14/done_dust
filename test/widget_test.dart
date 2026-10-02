@@ -111,7 +111,9 @@ void main() {
     expect(store.archived.length, 2);
     expect(store.todos.single.completed, isFalse);
 
-    await tester.tap(find.text('Clear archive').first);
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Clear archive'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Clear archive'));
     await tester.pumpAndSettle();

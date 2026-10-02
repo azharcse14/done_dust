@@ -172,7 +172,15 @@ class _TodoScreenState extends State<TodoScreen>
   // Store sync and persistence
   // ---------------------------------------------------------------------------
 
+  int _restoresSeen = 0;
+
   void _onStoreChanged() {
+    // A restored backup has a new set of finished tasks: pour them in.
+    if (store.restores != _restoresSeen) {
+      _restoresSeen = store.restores;
+      _restored = false;
+      _ensureTicking();
+    }
     _feedback
       ..soundOn = store.soundOn
       ..hapticsOn = store.hapticsOn;

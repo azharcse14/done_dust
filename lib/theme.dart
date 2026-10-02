@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'l10n.dart';
 import 'models/todo.dart';
 
+/// Colour sets for the letters in the jar; weekdays is the original.
+enum JarStyle { weekdays, sunset, ocean, mono }
+
 /// Visual tokens. The jar of coloured letters is the one loud element,
 /// so everything else stays in quiet ink-on-glass tones.
-class Palette {
+class Palette extends ThemeExtension<Palette> {
   const Palette({
     required this.glass,
     required this.surface,
@@ -61,8 +64,47 @@ class Palette {
     ],
   );
 
-  static Palette of(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? dark : light;
+  static const _styles = {
+    JarStyle.sunset: (
+      light: [0xFFB5543C, 0xFFC66B3D, 0xFFD08A3A, 0xFFB98F2C, 0xFFA8573F, 0xFF8E4A5A, 0xFF6E3F63],
+      dark: [0xFFE88B6F, 0xFFEFA06B, 0xFFF0BC6A, 0xFFE2C36A, 0xFFD98A73, 0xFFC7859A, 0xFFB08AB0],
+    ),
+    JarStyle.ocean: (
+      light: [0xFF1F5F8B, 0xFF2A7AA0, 0xFF2F8FA0, 0xFF2F8A7E, 0xFF2F7466, 0xFF3F6B8F, 0xFF4F5C8A],
+      dark: [0xFF6FA8D6, 0xFF6EC0E0, 0xFF6CCFD9, 0xFF6CCBB8, 0xFF79C2A8, 0xFF8DAED4, 0xFF9BA6D6],
+    ),
+    JarStyle.mono: (
+      light: [0xFF2E3A45, 0xFF3B4752, 0xFF48545F, 0xFF55616C, 0xFF626E79, 0xFF6F7B86, 0xFF7C8893],
+      dark: [0xFFE2E8EC, 0xFFD3DAE0, 0xFFC4CDD4, 0xFFB5BFC7, 0xFFA6B1BA, 0xFF97A3AD, 0xFF8995A0],
+    ),
+  };
+
+  static Palette forStyle(Brightness brightness, JarStyle style) {
+    final dark = brightness == Brightness.dark;
+    final base = dark ? Palette.dark : Palette.light;
+    final colors = _styles[style];
+    if (colors == null) return base;
+    return base.copyWith(strata: [for (final c in dark ? colors.dark : colors.light) Color(c)]);
+  }
+
+  static Palette of(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.extension<Palette>() ??
+        (theme.brightness == Brightness.dark ? Palette.dark : Palette.light);
+  }
+
+  @override
+  Palette copyWith({List<Color>? strata}) => Palette(
+        glass: glass,
+        surface: surface,
+        ink: ink,
+        inkSoft: inkSoft,
+        hairline: hairline,
+        strata: strata ?? this.strata,
+      );
+
+  @override
+  Palette lerp(Palette? other, double t) => t < 0.5 || other == null ? this : other;
 }
 
 String formatDay(DateTime d) => s.formatDay(d);
@@ -76,6 +118,7 @@ String dueLabel(int days, DateTime due) => switch (days) {
     };
 
 const kFontFamily = 'Bricolage';
+const kFontFallback = ['HindSiliguri'];
 const kTaskFontSize = 17.0;
 
 /// Heavier tasks are drawn heavier: the font weight matches the physical
@@ -101,6 +144,7 @@ TextStyle taskTextStyle({
 }) {
   return TextStyle(
     fontFamily: kFontFamily,
+    fontFamilyFallback: kFontFallback,
     fontSize: kTaskFontSize,
     height: 1.25,
     color: color,
@@ -109,8 +153,8 @@ TextStyle taskTextStyle({
   );
 }
 
-ThemeData buildTheme(Brightness brightness) {
-  final p = brightness == Brightness.dark ? Palette.dark : Palette.light;
+ThemeData buildTheme(Brightness brightness, [JarStyle style = JarStyle.weekdays]) {
+  final p = Palette.forStyle(brightness, style);
   final scheme = ColorScheme.fromSeed(
     seedColor: p.ink,
     brightness: brightness,
@@ -123,11 +167,14 @@ ThemeData buildTheme(Brightness brightness) {
     colorScheme: scheme,
     scaffoldBackgroundColor: p.glass,
     fontFamily: kFontFamily,
+    fontFamilyFallback: kFontFallback,
     dividerColor: p.hairline,
+    extensions: [p],
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
       backgroundColor: p.ink,
-      contentTextStyle: TextStyle(fontFamily: kFontFamily, color: p.glass),
+      contentTextStyle:
+          TextStyle(fontFamily: kFontFamily, fontFamilyFallback: kFontFallback, color: p.glass),
       actionTextColor: p.glass,
     ),
   );
