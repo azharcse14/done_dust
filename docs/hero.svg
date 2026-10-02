@@ -1,0 +1,293 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" width="720" height="440" role="img" aria-label="A task is checked and its letters fall into a jar">
+<style>
+text{font-family:"Bricolage Grotesque","Trebuchet MS","Segoe UI",sans-serif;font-weight:700}
+.L{font-size:22px}
+@keyframes box{0%,10%{fill:transparent;stroke:#93A1AB}16%,90%{fill:#B98ABD;stroke:#B98ABD}100%{fill:transparent;stroke:#93A1AB}}
+@keyframes pop{0%,10%{transform:scale(1)}14%{transform:scale(1.3)}19%,100%{transform:scale(1)}}
+@keyframes tick{0%,12%{stroke-dashoffset:20}18%,90%{stroke-dashoffset:0}96%,100%{stroke-dashoffset:20}}
+@keyframes bar{0%,18%{width:96px}32%,90%{width:160px}100%{width:96px}}
+@keyframes txt{0%,22%{opacity:1}26%,94%{opacity:0}100%{opacity:1}}
+@keyframes txt2{0%,22%{opacity:0}26%,94%{opacity:1}100%{opacity:0}}
+.box{animation:box 7s infinite both,pop 7s infinite both;transform-origin:50px 134px}
+.tick{stroke-dasharray:20;animation:tick 7s infinite both}
+.bar{animation:bar 7s infinite both}
+.cnt{animation:txt 7s infinite both}
+.cnt2{animation:txt2 7s infinite both}
+@keyframes l0{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(21.8px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(272.1px,191.8px);animation-timing-function:ease-out}
+57%{transform:translate(272.1px,182.8px);animation-timing-function:ease-in}
+62%,88%{transform:translate(272.1px,191.8px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(272.1px,191.8px);fill:#B98ABD;opacity:0}
+}
+@keyframes r0{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(-8.4deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(-41.9deg)}}
+.l0{animation:l0 7s 0.000s infinite both}
+.r0{transform-origin:78px 134px;animation:r0 7s 0.000s infinite both}
+@keyframes l1{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(25.0px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(312.3px,207.1px);animation-timing-function:ease-out}
+57%{transform:translate(312.3px,198.1px);animation-timing-function:ease-in}
+62%,88%{transform:translate(312.3px,207.1px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(312.3px,207.1px);fill:#B98ABD;opacity:0}
+}
+@keyframes r1{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(8.6deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(43.0deg)}}
+.l1{animation:l1 7s 0.035s infinite both}
+.r1{transform-origin:95px 134px;animation:r1 7s 0.035s infinite both}
+@keyframes l2{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(17.1px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(214.0px,189.2px);animation-timing-function:ease-out}
+57%{transform:translate(214.0px,180.2px);animation-timing-function:ease-in}
+62%,88%{transform:translate(214.0px,189.2px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(214.0px,189.2px);fill:#B98ABD;opacity:0}
+}
+@keyframes r2{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(-6.0deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(-30.2deg)}}
+.l2{animation:l2 7s 0.070s infinite both}
+.r2{transform-origin:108px 134px;animation:r2 7s 0.070s infinite both}
+@keyframes l3{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(12.3px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(153.9px,206.4px);animation-timing-function:ease-out}
+57%{transform:translate(153.9px,197.4px);animation-timing-function:ease-in}
+62%,88%{transform:translate(153.9px,206.4px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(153.9px,206.4px);fill:#B98ABD;opacity:0}
+}
+@keyframes r3{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(13.6deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(67.8deg)}}
+.l3{animation:l3 7s 0.105s infinite both}
+.r3{transform-origin:116px 134px;animation:r3 7s 0.105s infinite both}
+@keyframes l4{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(21.1px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(263.3px,193.1px);animation-timing-function:ease-out}
+57%{transform:translate(263.3px,184.1px);animation-timing-function:ease-in}
+62%,88%{transform:translate(263.3px,193.1px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(263.3px,193.1px);fill:#B98ABD;opacity:0}
+}
+@keyframes r4{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(-4.1deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(-20.3deg)}}
+.l4{animation:l4 7s 0.140s infinite both}
+.r4{transform-origin:124px 134px;animation:r4 7s 0.140s infinite both}
+@keyframes l5{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(24.6px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(308.1px,192.0px);animation-timing-function:ease-out}
+57%{transform:translate(308.1px,183.0px);animation-timing-function:ease-in}
+62%,88%{transform:translate(308.1px,192.0px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(308.1px,192.0px);fill:#B98ABD;opacity:0}
+}
+@keyframes r5{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(11.1deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(55.7deg)}}
+.l5{animation:l5 7s 0.175s infinite both}
+.r5{transform-origin:144px 134px;animation:r5 7s 0.175s infinite both}
+@keyframes l6{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(22.4px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(279.4px,206.4px);animation-timing-function:ease-out}
+57%{transform:translate(279.4px,197.4px);animation-timing-function:ease-in}
+62%,88%{transform:translate(279.4px,206.4px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(279.4px,206.4px);fill:#B98ABD;opacity:0}
+}
+@keyframes r6{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(9.7deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(48.7deg)}}
+.l6{animation:l6 7s 0.210s infinite both}
+.r6{transform-origin:152px 134px;animation:r6 7s 0.210s infinite both}
+@keyframes l7{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(10.7px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(133.2px,206.6px);animation-timing-function:ease-out}
+57%{transform:translate(133.2px,197.6px);animation-timing-function:ease-in}
+62%,88%{transform:translate(133.2px,206.6px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(133.2px,206.6px);fill:#B98ABD;opacity:0}
+}
+@keyframes r7{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(12.1deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(60.6deg)}}
+.l7{animation:l7 7s 0.245s infinite both}
+.r7{transform-origin:165px 134px;animation:r7 7s 0.245s infinite both}
+@keyframes l8{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(15.8px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(197.1px,206.9px);animation-timing-function:ease-out}
+57%{transform:translate(197.1px,197.9px);animation-timing-function:ease-in}
+62%,88%{transform:translate(197.1px,206.9px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(197.1px,206.9px);fill:#B98ABD;opacity:0}
+}
+@keyframes r8{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(-16.0deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(-79.8deg)}}
+.l8{animation:l8 7s 0.280s infinite both}
+.r8{transform-origin:185px 134px;animation:r8 7s 0.280s infinite both}
+@keyframes l9{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(20.9px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(260.7px,209.7px);animation-timing-function:ease-out}
+57%{transform:translate(260.7px,200.7px);animation-timing-function:ease-in}
+62%,88%{transform:translate(260.7px,209.7px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(260.7px,209.7px);fill:#B98ABD;opacity:0}
+}
+@keyframes r9{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(-3.9deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(-19.3deg)}}
+.l9{animation:l9 7s 0.315s infinite both}
+.r9{transform-origin:198px 134px;animation:r9 7s 0.315s infinite both}
+@keyframes l10{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(16.9px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(210.8px,188.5px);animation-timing-function:ease-out}
+57%{transform:translate(210.8px,179.5px);animation-timing-function:ease-in}
+62%,88%{transform:translate(210.8px,188.5px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(210.8px,188.5px);fill:#B98ABD;opacity:0}
+}
+@keyframes r10{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(-11.3deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(-56.3deg)}}
+.l10{animation:l10 7s 0.350s infinite both}
+.r10{transform-origin:211px 134px;animation:r10 7s 0.350s infinite both}
+@keyframes l11{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(7.9px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(98.5px,207.6px);animation-timing-function:ease-out}
+57%{transform:translate(98.5px,198.6px);animation-timing-function:ease-in}
+62%,88%{transform:translate(98.5px,207.6px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(98.5px,207.6px);fill:#B98ABD;opacity:0}
+}
+@keyframes r11{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(6.6deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(33.0deg)}}
+.l11{animation:l11 7s 0.385s infinite both}
+.r11{transform-origin:224px 134px;animation:r11 7s 0.385s infinite both}
+@keyframes l12{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(9.5px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(119.3px,209.2px);animation-timing-function:ease-out}
+57%{transform:translate(119.3px,200.2px);animation-timing-function:ease-in}
+62%,88%{transform:translate(119.3px,209.2px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(119.3px,209.2px);fill:#B98ABD;opacity:0}
+}
+@keyframes r12{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(8.7deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(43.3deg)}}
+.l12{animation:l12 7s 0.420s infinite both}
+.r12{transform-origin:237px 134px;animation:r12 7s 0.420s infinite both}
+@keyframes l13{
+0%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:0}
+5%,18%{transform:translate(0.0px,0.0px);fill:#E2E8EC;opacity:1}
+25%{transform:translate(2.8px,-16.0px);fill:#B98ABD;animation-timing-function:cubic-bezier(.55,0,1,.55)}
+52%{transform:translate(35.3px,192.8px);animation-timing-function:ease-out}
+57%{transform:translate(35.3px,183.8px);animation-timing-function:ease-in}
+62%,88%{transform:translate(35.3px,192.8px);fill:#B98ABD;opacity:1}
+96%,100%{transform:translate(35.3px,192.8px);fill:#B98ABD;opacity:0}
+}
+@keyframes r13{0%,18%{transform:rotate(0.0deg)}25%{transform:rotate(11.2deg);animation-timing-function:cubic-bezier(.55,0,1,.55)}52%,100%{transform:rotate(56.2deg)}}
+.l13{animation:l13 7s 0.455s infinite both}
+.r13{transform-origin:254px 134px;animation:r13 7s 0.455s infinite both}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<defs><radialGradient id="g" cx="0" cy="0" r="1"><stop offset="0" stop-color="#B98ABD" stop-opacity=".22"/><stop offset="1" stop-color="#B98ABD" stop-opacity="0"/></radialGradient></defs>
+<rect width="720" height="440" rx="22" fill="#16202A"/>
+<rect width="720" height="440" rx="22" fill="url(#g)" transform="scale(1.2)"/>
+<text x="40" y="56" fill="#E2E8EC" font-size="30" font-weight="800">My tasks</text>
+<text class="cnt" x="40" y="82" fill="#93A1AB" font-size="13" font-weight="400">2 of 5 done today · 4-day streak</text>
+<text class="cnt2" x="40" y="82" fill="#93A1AB" font-size="13" font-weight="400">3 of 5 done today · 4-day streak</text>
+<rect x="40" y="94" width="160" height="4" rx="2" fill="#34434F"/>
+<rect class="bar" x="40" y="94" height="4" rx="2" fill="#B98ABD"/>
+<circle cx="560" cy="60" r="4.5" fill="#8BA7D4"/><circle cx="576" cy="60" r="4.5" fill="#9DBE7F"/><circle cx="592" cy="60" r="4.5" fill="#E2B45E"/><circle cx="608" cy="60" r="4.5" fill="#E07F63"/><circle cx="624" cy="60" r="4.5" fill="#B98ABD"/><circle cx="640" cy="60" r="4.5" fill="#6CC3BC"/><circle cx="656" cy="60" r="4.5" fill="#B3A698"/><circle cx="624" cy="60" r="7" fill="none" stroke="#E2E8EC" stroke-width="1.4"/>
+<rect class="box" x="40" y="124" width="20" height="20" rx="6" stroke-width="1.6"/>
+<path class="tick" d="M44.5 134.5l4 4 7-8" fill="none" stroke="#16202A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="40" y1="162" x2="680" y2="162" stroke="#34434F"/>
+<rect x="40" y="176" width="20" height="20" rx="6" fill="none" stroke="#93A1AB" stroke-width="1.6"/>
+<text x="72" y="194" fill="#E2E8EC" font-size="22" font-weight="500">water the plants</text>
+<text x="72" y="212" fill="#93A1AB" font-size="12" font-weight="400">Due tomorrow</text>
+<line x1="40" y1="224" x2="680" y2="224" stroke="#34434F"/>
+<text x="256.2" y="400.9" fill="#8BA7D4" font-size="16" transform="rotate(48 256.2 400.9)">u</text>
+<text x="268.4" y="403.6" fill="#8BA7D4" font-size="16" transform="rotate(16 268.4 403.6)">o</text>
+<text x="279.7" y="404.6" fill="#8BA7D4" font-size="16" transform="rotate(-29 279.7 404.6)">e</text>
+<text x="291.3" y="403.2" fill="#8BA7D4" font-size="16" transform="rotate(55 291.3 403.2)">i</text>
+<text x="307.4" y="404.8" fill="#8BA7D4" font-size="16" transform="rotate(-67 307.4 404.8)">i</text>
+<text x="316.9" y="399.9" fill="#8BA7D4" font-size="16" transform="rotate(21 316.9 399.9)">d</text>
+<text x="331.1" y="399.5" fill="#8BA7D4" font-size="16" transform="rotate(16 331.1 399.5)">h</text>
+<text x="340.8" y="400.5" fill="#8BA7D4" font-size="16" transform="rotate(14 340.8 400.5)">a</text>
+<text x="353.0" y="399.1" fill="#8BA7D4" font-size="16" transform="rotate(-64 353.0 399.1)">a</text>
+<text x="365.2" y="403.8" fill="#8BA7D4" font-size="16" transform="rotate(70 365.2 403.8)">d</text>
+<text x="375.6" y="404.9" fill="#8BA7D4" font-size="16" transform="rotate(-11 375.6 404.9)">o</text>
+<text x="387.7" y="399.4" fill="#8BA7D4" font-size="16" transform="rotate(33 387.7 399.4)">d</text>
+<text x="403.1" y="399.9" fill="#8BA7D4" font-size="16" transform="rotate(-64 403.1 399.9)">h</text>
+<text x="414.5" y="400.9" fill="#8BA7D4" font-size="16" transform="rotate(-65 414.5 400.9)">r</text>
+<text x="424.8" y="405.0" fill="#8BA7D4" font-size="16" transform="rotate(21 424.8 405.0)">o</text>
+<text x="437.9" y="400.5" fill="#8BA7D4" font-size="16" transform="rotate(-13 437.9 400.5)">e</text>
+<text x="448.3" y="401.7" fill="#8BA7D4" font-size="16" transform="rotate(21 448.3 401.7)">s</text>
+<text x="464.0" y="402.0" fill="#8BA7D4" font-size="16" transform="rotate(-66 464.0 402.0)">i</text>
+<text x="472.5" y="402.2" fill="#8BA7D4" font-size="16" transform="rotate(38 472.5 402.2)">s</text>
+<text x="260.2" y="385.9" fill="#E2B45E" font-size="16" transform="rotate(-63 260.2 385.9)">n</text>
+<text x="270.4" y="390.9" fill="#E2B45E" font-size="16" transform="rotate(-14 270.4 390.9)">l</text>
+<text x="282.9" y="389.7" fill="#E2B45E" font-size="16" transform="rotate(34 282.9 389.7)">h</text>
+<text x="293.3" y="387.6" fill="#E2B45E" font-size="16" transform="rotate(60 293.3 387.6)">d</text>
+<text x="308.4" y="390.5" fill="#E2B45E" font-size="16" transform="rotate(-23 308.4 390.5)">l</text>
+<text x="317.8" y="390.4" fill="#E2B45E" font-size="16" transform="rotate(-26 317.8 390.4)">s</text>
+<text x="330.2" y="388.9" fill="#E2B45E" font-size="16" transform="rotate(26 330.2 388.9)">i</text>
+<text x="341.0" y="387.4" fill="#E2B45E" font-size="16" transform="rotate(-1 341.0 387.4)">i</text>
+<text x="356.8" y="389.0" fill="#E2B45E" font-size="16" transform="rotate(-64 356.8 389.0)">d</text>
+<text x="363.8" y="390.8" fill="#E2B45E" font-size="16" transform="rotate(23 363.8 390.8)">e</text>
+<text x="380.2" y="389.1" fill="#E2B45E" font-size="16" transform="rotate(-5 380.2 389.1)">h</text>
+<text x="391.5" y="390.6" fill="#E2B45E" font-size="16" transform="rotate(-39 391.5 390.6)">e</text>
+<text x="400.3" y="385.9" fill="#E2B45E" font-size="16" transform="rotate(15 400.3 385.9)">i</text>
+<text x="411.7" y="389.9" fill="#E2B45E" font-size="16" transform="rotate(40 411.7 389.9)">o</text>
+<text x="426.3" y="390.3" fill="#E2B45E" font-size="16" transform="rotate(-42 426.3 390.3)">l</text>
+<text x="438.6" y="389.9" fill="#E2B45E" font-size="16" transform="rotate(9 438.6 389.9)">h</text>
+<text x="452.5" y="387.6" fill="#E2B45E" font-size="16" transform="rotate(-59 452.5 387.6)">u</text>
+<text x="462.6" y="387.9" fill="#E2B45E" font-size="16" transform="rotate(51 462.6 387.9)">d</text>
+<text x="475.6" y="385.2" fill="#E2B45E" font-size="16" transform="rotate(-59 475.6 385.2)">r</text>
+<text x="260.4" y="372.8" fill="#E07F63" font-size="16" transform="rotate(-21 260.4 372.8)">t</text>
+<text x="267.5" y="374.3" fill="#E07F63" font-size="16" transform="rotate(-17 267.5 374.3)">i</text>
+<text x="281.3" y="375.6" fill="#E07F63" font-size="16" transform="rotate(50 281.3 375.6)">s</text>
+<text x="291.6" y="371.7" fill="#E07F63" font-size="16" transform="rotate(17 291.6 371.7)">n</text>
+<text x="306.1" y="373.6" fill="#E07F63" font-size="16" transform="rotate(50 306.1 373.6)">h</text>
+<text x="315.4" y="376.3" fill="#E07F63" font-size="16" transform="rotate(-43 315.4 376.3)">i</text>
+<text x="332.6" y="373.9" fill="#E07F63" font-size="16" transform="rotate(-53 332.6 373.9)">r</text>
+<text x="340.0" y="376.2" fill="#E07F63" font-size="16" transform="rotate(-45 340.0 376.2)">a</text>
+<text x="353.0" y="376.2" fill="#E07F63" font-size="16" transform="rotate(-34 353.0 376.2)">e</text>
+<text x="367.3" y="371.0" fill="#E07F63" font-size="16" transform="rotate(-26 367.3 371.0)">r</text>
+<text x="375.7" y="375.7" fill="#E07F63" font-size="16" transform="rotate(14 375.7 375.7)">r</text>
+<text x="387.5" y="372.5" fill="#E07F63" font-size="16" transform="rotate(49 387.5 372.5)">n</text>
+<text x="400.4" y="372.1" fill="#E07F63" font-size="16" transform="rotate(51 400.4 372.1)">e</text>
+<text x="415.1" y="374.7" fill="#E07F63" font-size="16" transform="rotate(-26 415.1 374.7)">h</text>
+<text x="427.7" y="374.4" fill="#E07F63" font-size="16" transform="rotate(61 427.7 374.4)">r</text>
+<text x="439.7" y="374.7" fill="#E07F63" font-size="16" transform="rotate(-8 439.7 374.7)">a</text>
+<text x="448.5" y="374.6" fill="#E07F63" font-size="16" transform="rotate(68 448.5 374.6)">n</text>
+<text x="459.8" y="371.5" fill="#E07F63" font-size="16" transform="rotate(-50 459.8 371.5)">d</text>
+<text x="472.1" y="376.4" fill="#E07F63" font-size="16" transform="rotate(-18 472.1 376.4)">d</text>
+<text x="259.8" y="361.0" fill="#9DBE7F" font-size="16" transform="rotate(54 259.8 361.0)">t</text>
+<text x="269.4" y="362.6" fill="#9DBE7F" font-size="16" transform="rotate(-45 269.4 362.6)">l</text>
+<text x="281.2" y="358.0" fill="#9DBE7F" font-size="16" transform="rotate(54 281.2 358.0)">d</text>
+<text x="291.1" y="362.7" fill="#9DBE7F" font-size="16" transform="rotate(46 291.1 362.7)">n</text>
+<text x="307.8" y="362.7" fill="#9DBE7F" font-size="16" transform="rotate(-48 307.8 362.7)">d</text>
+<text x="320.9" y="361.0" fill="#9DBE7F" font-size="16" transform="rotate(69 320.9 361.0)">t</text>
+<text x="331.6" y="362.8" fill="#9DBE7F" font-size="16" transform="rotate(-54 331.6 362.8)">l</text>
+<text x="341.9" y="362.3" fill="#9DBE7F" font-size="16" transform="rotate(-39 341.9 362.3)">l</text>
+<text x="352.8" y="362.6" fill="#9DBE7F" font-size="16" transform="rotate(-13 352.8 362.6)">d</text>
+<text x="364.4" y="359.9" fill="#9DBE7F" font-size="16" transform="rotate(-39 364.4 359.9)">n</text>
+<text x="376.4" y="359.0" fill="#9DBE7F" font-size="16" transform="rotate(18 376.4 359.0)">h</text>
+<text x="392.4" y="359.4" fill="#9DBE7F" font-size="16" transform="rotate(-14 392.4 359.4)">n</text>
+<text x="400.7" y="359.5" fill="#9DBE7F" font-size="16" transform="rotate(-68 400.7 359.5)">a</text>
+<text x="416.4" y="359.8" fill="#9DBE7F" font-size="16" transform="rotate(9 416.4 359.8)">n</text>
+<text x="425.4" y="359.3" fill="#9DBE7F" font-size="16" transform="rotate(-66 425.4 359.3)">r</text>
+<text x="435.4" y="362.8" fill="#9DBE7F" font-size="16" transform="rotate(68 435.4 362.8)">n</text>
+<text x="450.6" y="358.9" fill="#9DBE7F" font-size="16" transform="rotate(-57 450.6 358.9)">i</text>
+<text x="461.9" y="360.8" fill="#9DBE7F" font-size="16" transform="rotate(-3 461.9 360.8)">d</text>
+<text x="475.7" y="357.9" fill="#9DBE7F" font-size="16" transform="rotate(-37 475.7 357.9)">i</text>
+<g class="l0"><text class="L r0" x="72" y="142">w</text></g>
+<g class="l1"><text class="L r1" x="89" y="142">r</text></g>
+<g class="l2"><text class="L r2" x="102" y="142">i</text></g>
+<g class="l3"><text class="L r3" x="110" y="142">t</text></g>
+<g class="l4"><text class="L r4" x="118" y="142">e</text></g>
+<g class="l5"><text class="L r5" x="138" y="142">t</text></g>
+<g class="l6"><text class="L r6" x="146" y="142">h</text></g>
+<g class="l7"><text class="L r7" x="159" y="142">e</text></g>
+<g class="l8"><text class="L r8" x="179" y="142">r</text></g>
+<g class="l9"><text class="L r9" x="192" y="142">e</text></g>
+<g class="l10"><text class="L r10" x="205" y="142">a</text></g>
+<g class="l11"><text class="L r11" x="218" y="142">d</text></g>
+<g class="l12"><text class="L r12" x="231" y="142">m</text></g>
+<g class="l13"><text class="L r13" x="248" y="142">e</text></g>
+<path d="M236 240v138a32 32 0 0 0 32 32h184a32 32 0 0 0 32-32V240" fill="none" stroke="#93A1AB" stroke-opacity=".6" stroke-width="3" stroke-linecap="round"/>
+</svg>
