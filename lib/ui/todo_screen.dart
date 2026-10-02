@@ -57,6 +57,7 @@ class _TodoScreenState extends State<TodoScreen>
     _world
       ..onActivity = _ensureTicking
       ..onSettled = _scheduleSave
+      ..onOverflow = store.archive
       ..onGroupGone = (_, phase) {
         if (phase != Phase.returning) _scheduleSave();
       };
@@ -497,7 +498,7 @@ class _Header extends StatelessWidget {
                     height: 1.05,
                     letterSpacing: -0.6,
                     fontWeight: FontWeight.w800,
-                    fontVariations: [FontVariation('wght', 780), FontVariation('wdth', 92)],
+                    fontVariations: const [FontVariation('wght', 780), FontVariation('wdth', 92)],
                     color: palette.ink,
                   ),
                 ),

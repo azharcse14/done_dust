@@ -45,6 +45,13 @@ class ParticleWorld extends ChangeNotifier {
   /// Called whenever something needs the frame ticker running again.
   VoidCallback? onActivity;
 
+  /// Called with the oldest tasks thrown out because the jar overflowed.
+  void Function(List<int> taskIds)? onOverflow;
+
+  /// Most letters the jar holds before the oldest tasks are thrown out.
+  /// Tune per device class; collisions cost roughly O(n) per sub-step.
+  int maxJarLetters = 600;
+
   Size size = Size.zero;
   double floorInset = 24;
   double tiltX = 0;
@@ -508,10 +515,8 @@ class ParticleWorld extends ChangeNotifier {
     }
     if (gone.isNotEmpty) membership.value++;
 
-    _jar.clear();
-    for (final g in _groups.values) {
-      if (g.inJar) _jar.addAll(g.particles);
-    }
+    _fillJar();
+    if (_jar.length > maxJarLetters) _overflow();
     if (_jar.isNotEmpty && _simulateJar(dt)) moved = true;
 
     if (dust.isNotEmpty) {
@@ -603,6 +608,29 @@ class ParticleWorld extends ChangeNotifier {
 
   double _invMass(Particle p) =>
       identical(p, _grabbed) ? 0.15 : p.material.invMass;
+
+  void _fillJar() {
+    _jar.clear();
+    for (final g in _groups.values) {
+      if (g.inJar) _jar.addAll(g.particles);
+    }
+  }
+
+  /// Throws out the oldest tasks until the jar is back under its limit.
+  /// Groups are kept in insertion order, so the first ones are the oldest.
+  void _overflow() {
+    var excess = _jar.length - maxJarLetters;
+    final ids = <int>{};
+    for (final g in _groups.values) {
+      if (excess <= 0) break;
+      if (!g.inJar) continue;
+      ids.add(g.taskId);
+      excess -= g.particles.length;
+    }
+    final thrown = ejectJar(ids);
+    _fillJar();
+    if (thrown.isNotEmpty) onOverflow?.call(thrown);
+  }
 
   /// Returns true if anything moved this frame.
   bool _simulateJar(double dt) {

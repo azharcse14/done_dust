@@ -68,7 +68,7 @@ class _TaskEditorState extends State<_TaskEditor> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              fontVariations: [FontVariation('wght', 700)],
+              fontVariations: const [FontVariation('wght', 700)],
               color: palette.ink,
             ),
           ),
@@ -78,6 +78,9 @@ class _TaskEditorState extends State<_TaskEditor> {
             autofocus: true,
             minLines: 1,
             maxLines: 4,
+            // Every letter becomes a particle; keeps one task well under
+            // the jar's letter limit.
+            maxLength: 200,
             textCapitalization: TextCapitalization.sentences,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submit(),
