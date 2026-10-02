@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../models/todo.dart';
 import '../physics/particle_world.dart';
@@ -30,7 +31,7 @@ class TodoTile extends StatelessWidget {
     final palette = Palette.of(context);
     final checkColor = palette.strataFor(todo.completedAt ?? DateTime.now());
 
-    return SwipeToBlow(
+    final row = SwipeToBlow(
       onSwiped: onSwiped,
       child: Material(
         type: MaterialType.transparency,
@@ -73,6 +74,14 @@ class TodoTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    // Swiping is the only way to delete; screen readers get it as an action.
+    return Semantics(
+      customSemanticsActions: {
+        const CustomSemanticsAction(label: 'Delete'): () => onSwiped(1, 0),
+      },
+      child: row,
     );
   }
 }

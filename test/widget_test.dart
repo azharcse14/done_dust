@@ -11,5 +11,6 @@ void main() {
     await store.load();
     await tester.pumpWidget(PhysicsTodoApp(store: store));
     expect(find.byType(PhysicsTodoApp), findsOneWidget);
+    expect(find.bySemanticsLabel('Empty jar'), findsOneWidget);
   });
 }

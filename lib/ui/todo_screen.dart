@@ -57,7 +57,7 @@ class _TodoScreenState extends State<TodoScreen>
     _world
       ..onActivity = _ensureTicking
       ..onSettled = _scheduleSave
-      ..onOverflow = store.archive
+      ..onOverflow = _onOverflow
       ..onGroupGone = (_, phase) {
         if (phase != Phase.returning) _scheduleSave();
       };
@@ -254,6 +254,11 @@ class _TodoScreenState extends State<TodoScreen>
       ));
   }
 
+  String _jarLabel() {
+    final n = store.todos.where((t) => t.completed).length;
+    return n == 0 ? 'Empty jar' : 'Jar with letters of $n finished ${n == 1 ? 'task' : 'tasks'}';
+  }
+
   static String _short(String text) =>
       text.characters.length <= 24 ? text : '${text.characters.take(22)}…';
 
@@ -343,6 +348,14 @@ class _TodoScreenState extends State<TodoScreen>
     );
   }
 
+  /// No undo here: pouring the tasks back would only overflow again.
+  void _onOverflow(List<int> ids) {
+    final moved = store.archive(ids);
+    if (moved.isEmpty || !mounted) return;
+    _snack('Jar is full. Moved ${moved.length} oldest '
+        '${moved.length == 1 ? 'task' : 'tasks'} to the archive.');
+  }
+
   void _onShake() {
     if (!mounted) return;
     // Ignore shakes while a sheet or dialog is open on top of the list.
@@ -397,11 +410,20 @@ class _TodoScreenState extends State<TodoScreen>
                   ),
                 ),
                 Positioned.fill(
-                  child: ParticleLayer(
-                    world: _world,
-                    glyphs: _glyphs,
-                    ink: _palette.ink,
-                    onPoke: () => _feedback.impact(420),
+                  // The pile is only paint; tell screen readers what is in it.
+                  child: ListenableBuilder(
+                    listenable: store,
+                    builder: (context, child) => Semantics(
+                      container: true,
+                      label: _jarLabel(),
+                      child: child,
+                    ),
+                    child: ParticleLayer(
+                      world: _world,
+                      glyphs: _glyphs,
+                      ink: _palette.ink,
+                      onPoke: () => _feedback.impact(420),
+                    ),
                   ),
                 ),
               ],
