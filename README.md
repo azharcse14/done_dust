@@ -1,4 +1,4 @@
-# PhysicsTodo (Flutter)
+# Done Dust (Flutter)
 
 A to-do list where finished tasks crumble into a glass jar of letters.
 Flutter port of the original Jetpack Compose app, with new features on top.

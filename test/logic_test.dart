@@ -207,5 +207,20 @@ void main() {
       expect(w.groupOf(1)!.phase, Phase.ejecting);
       expect(w.groupOf(2)!.inJar, isTrue);
     });
+
+    test('letters fly home one by one, first letter first', () {
+      final w = world();
+      pour(w, 1, 8);
+      for (var i = 0; i < 300; i++) {
+        w.step(1 / 60);
+      }
+      final ps = w.groupOf(1)!.particles..sort((a, b) => a.index.compareTo(b.index));
+      final before = [for (final p in ps) (p.x, p.y)];
+      w.startReturn(1);
+      w.updateReturnTargets(1, _glyphs('x' * 8));
+      w.step(1 / 60);
+      expect((ps.first.x, ps.first.y), isNot(before.first), reason: 'first letter leaves at once');
+      expect((ps.last.x, ps.last.y), before.last, reason: 'last letter is still waiting');
+    });
   });
 }

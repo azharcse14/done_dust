@@ -170,6 +170,12 @@ class ParticleWorld extends ChangeNotifier {
     if (_grabbed != null && g.particles.contains(_grabbed)) _grabbed = null;
     g.phase = Phase.returning;
     g.elapsed = 0;
+    // Letters leave the jar one by one in reading order; long tasks squeeze
+    // the gaps so the whole word is home in under a second.
+    final step = math.min(0.045, 0.7 / g.particles.length);
+    for (final p in g.particles) {
+      p.delay = p.index * step;
+    }
     wake();
   }
 
@@ -544,6 +550,7 @@ class ParticleWorld extends ChangeNotifier {
   void _updateReturning(TaskParticles g, double dt) {
     final factor = clampD(1 - math.exp(-8.0 * dt), 0, 1);
     for (final p in g.particles) {
+      if (g.elapsed < p.delay) continue;
       final dx = p.returnX - p.x;
       final dy = p.returnY - p.y;
       final dist = math.sqrt(dx * dx + dy * dy);

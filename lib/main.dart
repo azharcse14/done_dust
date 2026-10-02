@@ -29,7 +29,7 @@ class PhysicsTodoApp extends StatelessWidget {
     return ListenableBuilder(
       listenable: store,
       builder: (context, child) => MaterialApp(
-        title: 'PhysicsTodo',
+        title: 'Done Dust',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),
