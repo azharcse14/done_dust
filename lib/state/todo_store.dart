@@ -146,23 +146,27 @@ class TodoStore extends ChangeNotifier {
   void setSound(bool on) {
     soundOn = on;
     notifyListeners();
-    unawaited(_storage.saveSettings(soundOn: soundOn, hapticsOn: hapticsOn));
+    unawaited(_save(_storage.saveSettings(soundOn: soundOn, hapticsOn: hapticsOn)));
   }
 
   void setHaptics(bool on) {
     hapticsOn = on;
     notifyListeners();
-    unawaited(_storage.saveSettings(soundOn: soundOn, hapticsOn: hapticsOn));
+    unawaited(_save(_storage.saveSettings(soundOn: soundOn, hapticsOn: hapticsOn)));
   }
 
-  Future<void> savePile(Map<String, dynamic> pile) => _storage.savePile(pile);
+  Future<void> savePile(Map<String, dynamic> pile) => _save(_storage.savePile(pile));
 
   void _changed() {
     notifyListeners();
     _persist();
   }
 
-  void _persist() => unawaited(_storage.saveTodos(_todos, _archived));
+  void _persist() => unawaited(_save(_storage.saveTodos(_todos, _archived)));
+
+  /// The UI can't wait on disk, but a failed write must at least be seen.
+  static Future<void> _save(Future<void> write) =>
+      write.catchError((Object e) => debugPrint('Save failed: $e'));
 
   static List<Todo> _starterTasks() {
     final now = DateTime.now();

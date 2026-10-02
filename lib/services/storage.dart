@@ -36,8 +36,8 @@ class Storage {
     final prefs = _prefs ??= await SharedPreferences.getInstance();
     final rawTodos = prefs.getString(_kTodos);
     return StoredState(
-      todos: _decodeTodos(rawTodos),
-      archived: _decodeTodos(prefs.getString(_kArchive)),
+      todos: await _decodeTodos(prefs, _kTodos),
+      archived: await _decodeTodos(prefs, _kArchive),
       pile: _decodeMap(prefs.getString(_kPile)),
       soundOn: prefs.getBool(_kSound) ?? true,
       hapticsOn: prefs.getBool(_kHaptics) ?? true,
@@ -62,14 +62,27 @@ class Storage {
     await prefs.setBool(_kHaptics, hapticsOn);
   }
 
-  static List<Todo> _decodeTodos(String? raw) {
+  /// A bad entry is skipped, not allowed to wipe the whole list. If the
+  /// list itself is unreadable, the raw text is kept under `<key>.bak`
+  /// before the next save overwrites it.
+  static Future<List<Todo>> _decodeTodos(SharedPreferences prefs, String key) async {
+    final raw = prefs.getString(key);
     if (raw == null) return [];
+    Object? list;
     try {
-      final list = jsonDecode(raw) as List;
-      return [for (final item in list) Todo.fromJson(item as Map<String, dynamic>)];
-    } catch (_) {
+      list = jsonDecode(raw);
+    } catch (_) {}
+    if (list is! List) {
+      await prefs.setString('$key.bak', raw);
       return [];
     }
+    final todos = <Todo>[];
+    for (final item in list) {
+      try {
+        todos.add(Todo.fromJson(item as Map<String, dynamic>));
+      } catch (_) {}
+    }
+    return todos;
   }
 
   static Map<String, dynamic>? _decodeMap(String? raw) {
