@@ -1,6 +1,6 @@
 {
-    "name": "animated_container_flutter",
-    "short_name": "animated_container_flutter",
+    "name": "physics_todo",
+    "short_name": "physics_todo",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
