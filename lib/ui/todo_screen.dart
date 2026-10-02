@@ -21,7 +21,7 @@ import 'task_editor_sheet.dart';
 import 'task_text.dart';
 import 'todo_tile.dart';
 
-enum _Show { all, open, done }
+enum _Show { all, open, overdue, done }
 
 enum _Sort { manual, priority, due }
 
@@ -423,6 +423,7 @@ class _TodoScreenState extends State<TodoScreen>
 
   List<Todo> _visible(List<Todo> todos) {
     final q = _query.toLowerCase();
+    final now = DateTime.now();
     // Letters flying home need their row on screen to land on, so a task
     // just unchecked under "Done" stays until they arrive.
     final returning = {
@@ -436,6 +437,7 @@ class _TodoScreenState extends State<TodoScreen>
                 switch (_show) {
                   _Show.all => true,
                   _Show.open => !t.completed,
+                  _Show.overdue => !t.completed && (t.daysUntilDue(now) ?? 0) < 0,
                   _Show.done => t.completed,
                 }))
           t,
@@ -571,6 +573,13 @@ class _TodoScreenState extends State<TodoScreen>
                   ? null
                   : all.where((t) => t.completed).length / all.length,
           archivedCount: store.archived.length,
+          overdueCount: store.todos
+              .where((t) => !t.completed && (t.daysUntilDue(DateTime.now()) ?? 0) < 0)
+              .length,
+          onOverdue: () => setState(() {
+            _finding = true;
+            _show = _Show.overdue;
+          }),
           finding: _finding,
           onAdd: _add,
           onFind: _toggleFind,
@@ -641,6 +650,8 @@ class _Header extends StatelessWidget {
     required this.dailyGoal,
     required this.progress,
     required this.archivedCount,
+    required this.overdueCount,
+    required this.onOverdue,
     required this.finding,
     required this.onAdd,
     required this.onFind,
@@ -658,6 +669,8 @@ class _Header extends StatelessWidget {
   /// Share of the list that is finished; null when the list is empty.
   final double? progress;
   final int archivedCount;
+  final int overdueCount;
+  final VoidCallback onOverdue;
   final bool finding;
   final VoidCallback onAdd;
   final VoidCallback onFind;
@@ -705,6 +718,10 @@ class _Header extends StatelessWidget {
                     _StrataLegend(palette: palette),
                   ],
                 ),
+                if (overdueCount > 0) ...[
+                  const SizedBox(height: 8),
+                  _OverduePill(count: overdueCount, onTap: onOverdue),
+                ],
                 if (progress case final p?) ...[
                   const SizedBox(height: 10),
                   Semantics(
@@ -779,6 +796,38 @@ PopupMenuItem<_MenuAction> _item(_MenuAction value, IconData icon, String label)
         Flexible(child: Text(label))
       ]),
     );
+
+class _OverduePill extends StatelessWidget {
+  const _OverduePill({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final error = Theme.of(context).colorScheme.error;
+    return Material(
+      color: error.withAlpha(28),
+      shape: const StadiumBorder(),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.schedule_rounded, size: 15, color: error),
+              const SizedBox(width: 5),
+              Text(s.overdueCount(count),
+                  style: TextStyle(color: error, fontSize: 13, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Old text slides up and out as the new one slides in.
 class _RollingText extends StatelessWidget {
@@ -906,21 +955,31 @@ class _FindBar extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              for (final (value, label) in [
-                (_Show.all, s.showAll),
-                (_Show.open, s.showOpen),
-                (_Show.done, s.showDone),
-              ])
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    label: Text(label),
-                    selected: show == value,
-                    onSelected: (_) => onShow(value),
-                    visualDensity: VisualDensity.compact,
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final (value, label) in [
+                        (_Show.all, s.showAll),
+                        (_Show.open, s.showOpen),
+                        (_Show.overdue, s.showOverdue),
+                        (_Show.done, s.showDone),
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: ChoiceChip(
+                            label: Text(label),
+                            selected: show == value,
+                            onSelected: (_) => onShow(value),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-              const Spacer(),
+              ),
+              const SizedBox(width: 6),
               DropdownButton<_Sort>(
                 value: sort,
                 underline: const SizedBox.shrink(),

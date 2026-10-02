@@ -21,7 +21,13 @@ Future<TodoStore> _emptyStore() async {
 
 List<CharAnchor> _glyphs(String text) => [
       for (var i = 0; i < text.length; i++)
-        CharAnchor(glyph: text[i], index: i, x: 20.0 + i * 10, baselineY: 0, width: 9, height: 14),
+        CharAnchor(
+            glyph: text[i],
+            index: i,
+            x: 20.0 + i * 10,
+            baselineY: 0,
+            width: 9,
+            height: 14),
     ];
 
 void main() {
@@ -40,7 +46,11 @@ void main() {
     });
 
     test('due date round-trips and counts whole days', () {
-      final t = Todo(id: 1, text: 'a', createdAt: DateTime(2026), due: DateTime(2026, 10, 3));
+      final t = Todo(
+          id: 1,
+          text: 'a',
+          createdAt: DateTime(2026),
+          due: DateTime(2026, 10, 3));
       expect(Todo.fromJson(t.toJson()).due, DateTime(2026, 10, 3));
       expect(t.daysUntilDue(DateTime(2026, 10, 2, 23, 59)), 1);
       expect(t.daysUntilDue(DateTime(2026, 10, 5)), -2);
@@ -49,7 +59,8 @@ void main() {
     });
 
     test('unknown priority falls back to normal', () {
-      final back = Todo.fromJson({'id': 1, 'text': 'a', 'priority': '??', 'createdAt': 0});
+      final back = Todo.fromJson(
+          {'id': 1, 'text': 'a', 'priority': '??', 'createdAt': 0});
       expect(back.priority, Priority.normal);
     });
   });
@@ -63,7 +74,8 @@ void main() {
       expect(s.todos.map((t) => t.text), ['ok']);
     });
 
-    test('an unreadable list is backed up before it can be overwritten', () async {
+    test('an unreadable list is backed up before it can be overwritten',
+        () async {
       SharedPreferences.setMockInitialValues({'todos.v2': '{not json'});
       final s = await Storage().load();
       expect(s.todos, isEmpty);
@@ -95,7 +107,8 @@ void main() {
       SharedPreferences.setMockInitialValues({'tasks.v3': '{oops'});
       final s = await Storage().load();
       expect(s.todos, isEmpty);
-      expect(s.firstRun, isFalse, reason: 'a broken store must not be replaced by starter tasks');
+      expect(s.firstRun, isFalse,
+          reason: 'a broken store must not be replaced by starter tasks');
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('tasks.v3.bak'), '{oops');
     });
@@ -153,7 +166,8 @@ void main() {
 
       final back = store.unarchive(moved);
       expect(back.map((t) => t.id), [c.id]);
-      expect(store.todos.map((t) => t.id), [a.id, c.id], reason: 'no duplicate, b stays deleted');
+      expect(store.todos.map((t) => t.id), [a.id, c.id],
+          reason: 'no duplicate, b stays deleted');
       expect(store.byId(a.id)!.completed, isFalse);
       expect(store.archived, isEmpty);
     });
@@ -181,8 +195,12 @@ void main() {
     });
 
     test('streak, weekday counts and export', () async {
-      Map<String, Object?> done(int id, DateTime d) =>
-          {'id': id, 'text': 't$id', 'createdAt': 0, 'completedAt': d.millisecondsSinceEpoch};
+      Map<String, Object?> done(int id, DateTime d) => {
+            'id': id,
+            'text': 't$id',
+            'createdAt': 0,
+            'completedAt': d.millisecondsSinceEpoch
+          };
       SharedPreferences.setMockInitialValues({
         'todos.v2': jsonEncode([
           done(1, DateTime(2026, 10, 1, 9)), // Thu
@@ -196,7 +214,8 @@ void main() {
       final store = TodoStore(Storage());
       await store.load();
       expect(store.streak(DateTime(2026, 10, 1, 12)), 2);
-      expect(store.streak(DateTime(2026, 10, 2)), 2, reason: 'alive until today ends');
+      expect(store.streak(DateTime(2026, 10, 2)), 2,
+          reason: 'alive until today ends');
       expect(store.streak(DateTime(2026, 10, 3)), 0);
       expect(store.doneByWeekday(), [1, 0, 1, 1, 0, 0, 0]);
       expect(store.doneTotal, 3);
@@ -220,7 +239,8 @@ void main() {
       final a = store.add('a', Priority.normal);
       final b = store.add('b', Priority.normal, due: DateTime(2026, 1, 2));
       store.edit(b.id, text: 'b', priority: Priority.low);
-      expect(store.byId(b.id)!.due, isNull, reason: 'edit without a due date clears it');
+      expect(store.byId(b.id)!.due, isNull,
+          reason: 'edit without a due date clears it');
       store.setCompleted(a.id, true);
       store.archive([a.id]);
       store.deleteArchived(a.id);
@@ -302,13 +322,16 @@ void main() {
       for (var i = 0; i < 300; i++) {
         w.step(1 / 60);
       }
-      final ps = w.groupOf(1)!.particles..sort((a, b) => a.index.compareTo(b.index));
+      final ps = w.groupOf(1)!.particles
+        ..sort((a, b) => a.index.compareTo(b.index));
       final before = [for (final p in ps) (p.x, p.y)];
       w.startReturn(1);
       w.updateReturnTargets(1, _glyphs('x' * 8));
       w.step(1 / 60);
-      expect((ps.first.x, ps.first.y), isNot(before.first), reason: 'first letter leaves at once');
-      expect((ps.last.x, ps.last.y), before.last, reason: 'last letter is still waiting');
+      expect((ps.first.x, ps.first.y), isNot(before.first),
+          reason: 'first letter leaves at once');
+      expect((ps.last.x, ps.last.y), before.last,
+          reason: 'last letter is still waiting');
     });
 
     test('celebrate keeps the world awake until the confetti fades', () {
@@ -341,13 +364,18 @@ void main() {
     test('nextDue steps from the due date, or from today when overdue', () {
       final now = DateTime(2026, 10, 2, 15);
       expect(nextDue(Repeat.daily, null, now), DateTime(2026, 10, 3));
-      expect(nextDue(Repeat.weekly, DateTime(2026, 10, 5), now), DateTime(2026, 10, 12));
-      expect(nextDue(Repeat.daily, DateTime(2026, 9, 1), now), DateTime(2026, 10, 3));
+      expect(nextDue(Repeat.weekly, DateTime(2026, 10, 5), now),
+          DateTime(2026, 10, 12));
+      expect(nextDue(Repeat.daily, DateTime(2026, 9, 1), now),
+          DateTime(2026, 10, 3));
     });
 
-    test('finishing a repeating task adds the next one; unchecking takes it back', () async {
+    test(
+        'finishing a repeating task adds the next one; unchecking takes it back',
+        () async {
       final store = await _emptyStore();
-      final t = store.add('water plants', Priority.normal, repeat: Repeat.daily);
+      final t =
+          store.add('water plants', Priority.normal, repeat: Repeat.daily);
       store.setCompleted(t.id, true);
       expect(store.todos.length, 2);
       final next = store.todos.firstWhere((x) => !x.completed);
@@ -364,6 +392,36 @@ void main() {
       final t = store.add('a', Priority.normal);
       store.togglePin(t.id);
       expect(store.byId(t.id)!.pinned, isTrue);
+    });
+  });
+
+  group('Smart dates', () {
+    final fri = DateTime(2026, 10, 2, 10); // a Friday
+
+    test('a trailing date word sets the due date and is removed', () {
+      expect(parseDue('call mom tomorrow', fri),
+          ('call mom', DateTime(2026, 10, 3)));
+      expect(parseDue('pay rent by Monday', fri),
+          ('pay rent', DateTime(2026, 10, 5)));
+      expect(parseDue('review fri', fri), ('review', DateTime(2026, 10, 9)));
+      expect(parseDue('বাজার করা আগামীকাল', fri),
+          ('বাজার করা', DateTime(2026, 10, 3)));
+      expect(parseDue('মিটিং সোমবার', fri), ('মিটিং', DateTime(2026, 10, 5)));
+    });
+
+    test('words elsewhere, or alone, are left as typed', () {
+      expect(parseDue("Today's report", fri), ("Today's report", null));
+      expect(parseDue('tomorrow', fri), ('tomorrow', null));
+      expect(parseDue('read sunday times article', fri).$2, isNull);
+    });
+
+    test('store.add applies it only when no date was picked', () async {
+      final store = await _emptyStore();
+      final a = store.add('gym today', Priority.normal);
+      expect(a.text, 'gym');
+      expect(a.due, isNotNull);
+      final b = store.add('gym today', Priority.normal, due: DateTime(2030));
+      expect((b.text, b.due), ('gym today', DateTime(2030)));
     });
   });
 }

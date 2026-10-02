@@ -158,6 +158,16 @@ class S {
   String get repeatDaily => _t('Daily', 'প্রতিদিন');
   String get repeatWeekly => _t('Weekly', 'প্রতি সপ্তাহে');
 
+  String get showOverdue => _t('Overdue', 'মেয়াদোত্তীর্ণ');
+  String overdueCount(int c) => _t('$c overdue', '${n(c)}টি দেরি হয়েছে');
+  String get reminders => _t('Due date reminders', 'শেষ তারিখের রিমাইন্ডার');
+  String get remindersHint =>
+      _t('A notification at 9 AM on the due day', 'শেষ দিনে সকাল ৯টায় নোটিফিকেশন');
+  String get remindersBlocked => _t('Notifications are blocked. Allow them in system settings.',
+      'নোটিফিকেশন বন্ধ আছে। সিস্টেম সেটিংসে চালু করুন।');
+  String get smartDateHint => _t('Tip: end with “tomorrow” or “fri” to set a date',
+      'টিপ: শেষে “আগামীকাল” বা “শুক্রবার” লিখলে তারিখ বসবে');
+
   // Archive
   String get deletedFromArchive => _t('Deleted from archive', 'আর্কাইভ থেকে মুছে ফেলা হয়েছে');
   String get clearArchiveQ => _t('Clear the archive?', 'আর্কাইভ খালি করবেন?');

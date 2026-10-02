@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../services/reminders.dart';
 import '../state/todo_store.dart';
 import '../theme.dart';
 
@@ -78,6 +79,20 @@ class _Settings extends StatelessWidget {
               value: store.hapticsOn,
               onChanged: store.setHaptics,
             ),
+            if (Reminders.supported)
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                secondary: const Icon(Icons.notifications_active_outlined),
+                title: Text(s.reminders),
+                subtitle: Text(
+                  store.remindersBlocked ? s.remindersBlocked : s.remindersHint,
+                  style: store.remindersBlocked
+                      ? TextStyle(color: Theme.of(context).colorScheme.error)
+                      : null,
+                ),
+                value: store.remindersOn,
+                onChanged: store.setReminders,
+              ),
             label('${s.dailyGoal} · ${s.dailyGoalHint}'),
             choice({for (final g in _goals) g: g == 0 ? s.off : s.n(g)}, store.dailyGoal,
                 store.setDailyGoal),

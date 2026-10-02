@@ -7,6 +7,7 @@ void main() {
     expect(bn.n(2026), '২০২৬');
     expect(bn.archived(3), '৩টি কাজ আর্কাইভ হয়েছে');
     expect(bn.formatDay(DateTime(2026, 10, 2)), 'শুক্র, ২ অক্টো');
-    expect(const S(false).jarFull(1), 'Jar is full. Moved 1 oldest task to the archive.');
+    expect(const S(false).jarFull(1),
+        'Jar is full. Moved 1 oldest task to the archive.');
   });
 }

@@ -17,7 +17,7 @@ Future<void> showStatsSheet(BuildContext context, TodoStore store) {
     context: context,
     showDragHandle: true,
     backgroundColor: palette.surface,
-    builder: (context) => Padding(
+    builder: (context) => SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -34,7 +34,8 @@ Future<void> showStatsSheet(BuildContext context, TodoStore store) {
           ),
           const SizedBox(height: 12),
           Text(
-            s.statsLine(store.doneTotal, store.todos.where((t) => !t.completed).length, streak),
+            s.statsLine(store.doneTotal,
+                store.todos.where((t) => !t.completed).length, streak),
             style: TextStyle(color: palette.inkSoft, fontSize: 14),
           ),
           if (top > 0) ...[
@@ -56,7 +57,8 @@ Future<void> showStatsSheet(BuildContext context, TodoStore store) {
                     SizedBox(
                       width: 36,
                       child: Text(s.weekdaysShort[i],
-                          style: TextStyle(color: palette.inkSoft, fontSize: 13)),
+                          style:
+                              TextStyle(color: palette.inkSoft, fontSize: 13)),
                     ),
                     Expanded(
                       child: ClipRRect(

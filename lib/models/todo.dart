@@ -111,3 +111,35 @@ DateTime nextDue(Repeat repeat, DateTime? due, DateTime now) {
   final base = due == null || due.isBefore(today) ? today : due;
   return DateTime(base.year, base.month, base.day + (repeat == Repeat.weekly ? 7 : 1));
 }
+
+final _dueWord = RegExp(
+  r'\s+(?:(?:on|by|due)\s+)?'
+  r'(today|tonight|tomorrow|tmrw|tmr|next week|'
+  r'mon(?:day)?|tue(?:s|sday)?|wed(?:nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?|'
+  r'আজ|আজকে|আজই|আগামীকাল|কাল|কালকে|সামনের সপ্তাহে|'
+  r'সোম|মঙ্গল|বুধ|বৃহস্পতি|শুক্র|শনি|রবি)(?:বার)?\s*$',
+  caseSensitive: false,
+);
+
+/// "call mom tomorrow" → ("call mom", tomorrow). Only a word at the very
+/// end counts, so "Today's report" stays as typed. A weekday means the next
+/// one after today. English and Bangla both work in either UI language.
+(String, DateTime?) parseDue(String text, DateTime now) {
+  final m = _dueWord.firstMatch(text);
+  if (m == null || m.start == 0) return (text, null);
+  final word = m[1]!.toLowerCase();
+  final days = switch (word) {
+    'today' || 'tonight' || 'আজ' || 'আজকে' || 'আজই' => 0,
+    'tomorrow' || 'tmrw' || 'tmr' || 'আগামীকাল' || 'কাল' || 'কালকে' => 1,
+    'next week' || 'সামনের সপ্তাহে' => 7,
+    _ => () {
+        const en = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        const bn = ['সোম', 'মঙ্গল', 'বুধ', 'বৃহস্পতি', 'শুক্র', 'শনি', 'রবি'];
+        var i = en.indexWhere(word.startsWith);
+        if (i < 0) i = bn.indexOf(word);
+        final ahead = (i + 1 - now.weekday) % 7;
+        return ahead == 0 ? 7 : ahead;
+      }(),
+  };
+  return (text.substring(0, m.start).trim(), DateTime(now.year, now.month, now.day + days));
+}

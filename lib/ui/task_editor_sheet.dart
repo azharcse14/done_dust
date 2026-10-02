@@ -182,6 +182,35 @@ class _TaskEditorState extends State<_TaskEditor> {
           ),
           const SizedBox(height: 8),
           Text(_hint, style: TextStyle(color: palette.inkSoft, fontSize: 13)),
+          // Shows the date a trailing "tomorrow"/"fri" will set, or how to use it.
+          if (_due == null)
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _text,
+              builder: (context, value, _) {
+                final lines = _lines(value.text);
+                final parsed = lines.length == 1 ? parseDue(lines.single, DateTime.now()).$2 : null;
+                return Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                          parsed == null
+                              ? Icons.lightbulb_outline_rounded
+                              : Icons.event_available_rounded,
+                          size: 15,
+                          color: palette.inkSoft),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          parsed == null ? s.smartDateHint : s.due(formatDay(parsed)),
+                          style: TextStyle(color: palette.inkSoft, fontSize: 12.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,

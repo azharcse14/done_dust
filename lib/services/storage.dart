@@ -13,6 +13,7 @@ class StoredState {
     required this.hapticsOn,
     required this.theme,
     required this.language,
+    required this.remindersOn,
     required this.dailyGoal,
     required this.firstRun,
   });
@@ -24,6 +25,7 @@ class StoredState {
   final bool hapticsOn;
   final String? theme;
   final String? language;
+  final bool remindersOn;
 
   /// Tasks to finish per day; 0 = no goal.
   final int dailyGoal;
@@ -45,6 +47,7 @@ class Storage {
   static const _kTheme = 'theme';
   static const _kGoal = 'dailyGoal';
   static const _kLanguage = 'language';
+  static const _kReminders = 'reminders';
 
   SharedPreferences? _prefs;
 
@@ -69,6 +72,7 @@ class Storage {
       hapticsOn: prefs.getBool(_kHaptics) ?? true,
       theme: prefs.getString(_kTheme),
       language: prefs.getString(_kLanguage),
+      remindersOn: prefs.getBool(_kReminders) ?? false,
       dailyGoal: prefs.getInt(_kGoal) ?? 0,
       firstRun: rawTasks == null && prefs.getString(_kTodos) == null,
     );
@@ -95,6 +99,7 @@ class Storage {
     required bool hapticsOn,
     required String theme,
     required String language,
+    required bool remindersOn,
     required int dailyGoal,
   }) async {
     final prefs = _prefs ??= await SharedPreferences.getInstance();
@@ -102,6 +107,7 @@ class Storage {
     await prefs.setBool(_kHaptics, hapticsOn);
     await prefs.setString(_kTheme, theme);
     await prefs.setString(_kLanguage, language);
+    await prefs.setBool(_kReminders, remindersOn);
     await prefs.setInt(_kGoal, dailyGoal);
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'l10n.dart';
+import 'services/reminders.dart';
 import 'services/storage.dart';
 import 'state/todo_store.dart';
 import 'theme.dart';
@@ -15,7 +16,7 @@ Future<void> main() async {
   // under it.
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  final store = TodoStore(Storage());
+  final store = TodoStore(Storage(), Reminders());
   await store.load();
 
   runApp(PhysicsTodoApp(store: store));

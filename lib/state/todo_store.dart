@@ -6,12 +6,14 @@ import 'package:flutter/material.dart' show ThemeMode;
 
 import '../l10n.dart';
 import '../models/todo.dart';
+import '../services/reminders.dart';
 import '../services/storage.dart';
 
 class TodoStore extends ChangeNotifier {
-  TodoStore(this._storage);
+  TodoStore(this._storage, [this._reminders]);
 
   final Storage _storage;
+  final Reminders? _reminders;
   List<Todo> _todos = [];
   List<Todo> _archived = [];
   bool loaded = false;
@@ -21,6 +23,11 @@ class TodoStore extends ChangeNotifier {
 
   /// 'system', 'en' or 'bn'.
   String language = 'system';
+
+  bool remindersOn = false;
+
+  /// The system refused notifications the last time they were switched on.
+  bool remindersBlocked = false;
 
   /// Tasks to finish per day; 0 = no goal.
   int dailyGoal = 0;
@@ -96,6 +103,8 @@ class TodoStore extends ChangeNotifier {
     );
     dailyGoal = s.dailyGoal;
     setLanguage(s.language ?? 'system', save: false);
+    remindersOn = s.remindersOn;
+    _syncReminders();
     loaded = true;
     notifyListeners();
     if (s.firstRun) _persist();
@@ -117,6 +126,7 @@ class TodoStore extends ChangeNotifier {
     bool pinned = false,
     Repeat repeat = Repeat.none,
   }) {
+    if (due == null) (text, due) = parseDue(text, DateTime.now());
     final todo = Todo(
       id: _nextId(),
       text: text.trim(),
@@ -141,6 +151,7 @@ class TodoStore extends ChangeNotifier {
     bool pinned = false,
     Repeat repeat = Repeat.none,
   }) {
+    if (due == null) (text, due) = parseDue(text, DateTime.now());
     _todos = [
       for (final t in _todos)
         if (t.id == id)
@@ -303,6 +314,29 @@ class TodoStore extends ChangeNotifier {
     if (save) _settingsChanged();
   }
 
+  Future<void> setReminders(bool on) async {
+    if (on && !(await _reminders?.requestPermission() ?? false)) {
+      remindersBlocked = true;
+      notifyListeners();
+      return;
+    }
+    remindersBlocked = false;
+    remindersOn = on;
+    _settingsChanged();
+    _syncReminders();
+  }
+
+  Timer? _reminderTimer;
+
+  /// Coalesces bursts of edits into one reschedule.
+  void _syncReminders() {
+    if (_reminders == null) return;
+    _reminderTimer?.cancel();
+    _reminderTimer = Timer(const Duration(seconds: 1), () {
+      unawaited(_reminders.sync(_todos, on: remindersOn));
+    });
+  }
+
   void setDailyGoal(int goal) {
     dailyGoal = goal;
     _settingsChanged();
@@ -315,6 +349,7 @@ class TodoStore extends ChangeNotifier {
       hapticsOn: hapticsOn,
       theme: themeMode.name,
       language: language,
+      remindersOn: remindersOn,
       dailyGoal: dailyGoal,
     )));
   }
@@ -324,6 +359,7 @@ class TodoStore extends ChangeNotifier {
   void _changed() {
     notifyListeners();
     _persist();
+    _syncReminders();
   }
 
   void _persist() => unawaited(_save(_storage.saveTodos(_todos, _archived)));
