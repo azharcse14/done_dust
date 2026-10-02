@@ -5,7 +5,7 @@ import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../l10n.dart';
-import '../models/todo.dart';
+import '../models/todo.dart' show Todo;
 
 /// One notification per open task, on the morning of its due day.
 class Reminders {
@@ -64,31 +64,40 @@ class Reminders {
     }
   }
 
-  /// Replaces every scheduled reminder with one per open task due ahead.
+  /// Replaces every scheduled notification: a task's own alarm always,
+  /// plus 9 AM on the due day when [on].
   Future<void> sync(List<Todo> todos, {required bool on}) async {
     if (!supported) return;
     try {
       await (_ready ??= _init());
       await _plugin.cancelAll();
-      if (!on) return;
       final now = tz.TZDateTime.now(tz.local);
       final due = [
         for (final t in todos)
-          if (!t.completed && t.due != null)
-            (t, tz.TZDateTime(tz.local, t.due!.year, t.due!.month, t.due!.day, _hour)),
-      ].where((e) => e.$2.isAfter(now)).toList()
+          if (t.completed)
+            null
+          else if (t.remindAt case final at?)
+            (t, tz.TZDateTime.from(at, tz.local), true)
+          else if (on && t.due != null)
+            (t, tz.TZDateTime(tz.local, t.due!.year, t.due!.month, t.due!.day, _hour), false),
+      ].nonNulls.where((e) => e.$2.isAfter(now)).toList()
         ..sort((a, b) => a.$2.compareTo(b.$2));
-      for (final (t, at) in due.take(_max)) {
+      for (final (t, at, alarm) in due.take(_max)) {
         await _plugin.zonedSchedule(
           id: t.id % 0x7fffffff,
           scheduledDate: at,
-          title: s.dueToday,
+          title: alarm ? s.alarm : s.dueToday,
           body: t.text,
           notificationDetails: NotificationDetails(
-            android: AndroidNotificationDetails('due', s.reminders),
+            android: alarm
+                ? AndroidNotificationDetails('alarm', s.alarm,
+                    importance: Importance.max, priority: Priority.high)
+                : AndroidNotificationDetails('due', s.reminders),
             iOS: const DarwinNotificationDetails(),
             macOS: const DarwinNotificationDetails(),
           ),
+          // ponytail: inexact, so Android may ring a few minutes late; exact needs
+          // the SCHEDULE_EXACT_ALARM permission flow.
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
       }

@@ -496,4 +496,54 @@ void main() {
       expect(Palette.forStyle(Brightness.dark, JarStyle.weekdays), same(Palette.dark));
     });
   });
+
+  group('Alarm and stopwatch', () {
+    test('fields round-trip; elapsed adds the running stretch', () {
+      final start = DateTime(2026, 10, 2, 10);
+      final t = Todo(
+        id: 1,
+        text: 'a',
+        createdAt: DateTime(2026),
+        remindAt: DateTime(2026, 10, 2, 17, 30),
+        spent: const Duration(minutes: 5),
+        startedAt: start,
+      );
+      final back = Todo.fromJson(t.toJson());
+      expect(back.remindAt, DateTime(2026, 10, 2, 17, 30));
+      expect(back.spent, const Duration(minutes: 5));
+      expect(back.startedAt, start);
+      expect(t.elapsed(start.add(const Duration(minutes: 2))), const Duration(minutes: 7));
+      final stopped = t.stopTimer(start.add(const Duration(minutes: 2)));
+      expect((stopped.timing, stopped.spent), (false, const Duration(minutes: 7)));
+    });
+
+    test('stopwatch starts on add, pauses on toggle, stops when finished', () async {
+      final store = await _emptyStore();
+      final t = store.add('focus', Priority.normal, timing: true);
+      expect(store.byId(t.id)!.timing, isTrue);
+      store.toggleTimer(t.id);
+      expect(store.byId(t.id)!.timing, isFalse);
+      store.toggleTimer(t.id);
+      store.setCompleted(t.id, true);
+      expect(store.byId(t.id)!.timing, isFalse);
+    });
+
+    test('a repeating task carries its alarm time to the next day', () async {
+      final store = await _emptyStore();
+      final now = DateTime.now();
+      final t = store.add('pills', Priority.normal,
+          repeat: Repeat.daily,
+          due: DateTime(now.year, now.month, now.day),
+          remindAt: DateTime(now.year, now.month, now.day, 8, 15));
+      store.setCompleted(t.id, true);
+      final next = store.todos.firstWhere((x) => !x.completed);
+      expect(next.remindAt, DateTime(now.year, now.month, now.day + 1, 8, 15));
+    });
+
+    test('clock formats like a stopwatch, in either language', () {
+      expect(const S(false).clock(const Duration(minutes: 4, seconds: 5)), '4:05');
+      expect(const S(false).clock(const Duration(hours: 1, minutes: 2, seconds: 9)), '1:02:09');
+      expect(const S(true).clock(const Duration(minutes: 4, seconds: 5)), '৪:০৫');
+    });
+  });
 }

@@ -191,6 +191,20 @@ class S {
   String get restoreAllBody =>
       _t('They return to your list as open tasks.', 'কাজগুলো তালিকায় আবার খোলা কাজ হিসেবে ফিরবে।');
 
+  String get alarm => _t('Alarm', 'অ্যালার্ম');
+  String alarmAt(String time) => _t('Alarm $time', 'অ্যালার্ম $time');
+  String get removeAlarm => _t('Remove alarm', 'অ্যালার্ম সরান');
+  String get stopwatch => _t('Stopwatch', 'স্টপওয়াচ');
+  String get startStopwatch => _t('Start stopwatch', 'স্টপওয়াচ চালু করুন');
+  String get pauseStopwatch => _t('Pause stopwatch', 'স্টপওয়াচ থামান');
+
+  /// 4:05 or 1:02:09, the way a stopwatch shows it.
+  String clock(Duration d) {
+    String two(int v) => n(v).padLeft(2, bn ? '০' : '0');
+    final h = d.inHours, m = d.inMinutes % 60, sec = d.inSeconds % 60;
+    return h > 0 ? '${n(h)}:${two(m)}:${two(sec)}' : '${n(m)}:${two(sec)}';
+  }
+
   // Archive
   String get deletedFromArchive => _t('Deleted from archive', 'আর্কাইভ থেকে মুছে ফেলা হয়েছে');
   String get clearArchiveQ => _t('Clear the archive?', 'আর্কাইভ খালি করবেন?');

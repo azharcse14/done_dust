@@ -328,7 +328,12 @@ class _TodoScreenState extends State<TodoScreen>
     // Reversed so a pasted list keeps its order at the top.
     for (final text in draft.texts.reversed) {
       store.add(text, draft.priority,
-          due: draft.due, note: draft.note, pinned: draft.pinned, repeat: draft.repeat);
+          due: draft.due,
+          note: draft.note,
+          pinned: draft.pinned,
+          repeat: draft.repeat,
+          remindAt: draft.remindAt,
+          timing: draft.timing);
     }
     if (draft.texts.length > 1) _snack(s.added(draft.texts.length));
     if (_scroll.hasClients) {
@@ -342,7 +347,12 @@ class _TodoScreenState extends State<TodoScreen>
     if (draft == null || !mounted) return;
     if (draft.duplicate) {
       store.add(draft.texts.single, draft.priority,
-          due: draft.due, note: draft.note, pinned: draft.pinned, repeat: draft.repeat);
+          due: draft.due,
+          note: draft.note,
+          pinned: draft.pinned,
+          repeat: draft.repeat,
+          remindAt: draft.remindAt,
+          timing: draft.timing);
       _snack(s.duplicated(_short(draft.texts.single)));
     } else {
       store.edit(todo.id,
@@ -351,7 +361,9 @@ class _TodoScreenState extends State<TodoScreen>
           due: draft.due,
           note: draft.note,
           pinned: draft.pinned,
-          repeat: draft.repeat);
+          repeat: draft.repeat,
+          remindAt: draft.remindAt,
+          timing: draft.timing);
     }
   }
 
@@ -641,6 +653,7 @@ class _TodoScreenState extends State<TodoScreen>
                           onToggle: () => _toggle(t),
                           onEdit: () => _edit(t),
                           onPin: () => store.togglePin(t.id),
+                          onTimer: () => store.toggleTimer(t.id),
                           onSwiped: (dir, v) => _swiped(t, dir, v),
                         );
                       },

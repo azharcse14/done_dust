@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ class TodoTile extends StatelessWidget {
     required this.onToggle,
     required this.onEdit,
     required this.onPin,
+    required this.onTimer,
     required this.onSwiped,
     this.enterDelay,
   });
@@ -28,6 +30,7 @@ class TodoTile extends StatelessWidget {
   final VoidCallback onToggle;
   final VoidCallback onEdit;
   final VoidCallback onPin;
+  final VoidCallback onTimer;
 
   /// [direction] is +1 for a swipe to the right, -1 to the left.
   final void Function(double direction, double velocity) onSwiped;
@@ -42,6 +45,7 @@ class TodoTile extends StatelessWidget {
     final now = DateTime.now();
     final checkColor = palette.strataFor(todo.completedAt ?? now);
     final dueIn = todo.completed ? null : todo.daysUntilDue(now);
+    final alarm = todo.remindAt;
 
     final row = SwipeToBlow(
       onSwiped: onSwiped,
@@ -93,10 +97,17 @@ class TodoTile extends StatelessWidget {
                               style: TextStyle(fontSize: 13, height: 1.3, color: palette.inkSoft),
                             ),
                           ),
-                        if (dueIn != null || todo.pinned || todo.repeat != Repeat.none)
+                        if (dueIn != null ||
+                            todo.pinned ||
+                            todo.repeat != Repeat.none ||
+                            (alarm != null && !todo.completed) ||
+                            todo.timing ||
+                            todo.spent > Duration.zero)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
-                            child: Row(
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              runSpacing: 4,
                               children: [
                                 if (todo.pinned) ...[
                                   Icon(Icons.push_pin_rounded, size: 14, color: palette.inkSoft),
@@ -106,17 +117,31 @@ class TodoTile extends StatelessWidget {
                                   Icon(Icons.repeat_rounded, size: 14, color: palette.inkSoft),
                                   const SizedBox(width: 6),
                                 ],
+                                if (todo.timing || todo.spent > Duration.zero) ...[
+                                  _TimerPill(
+                                    todo: todo,
+                                    onTap: todo.completed ? null : onTimer,
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                if (alarm != null && !todo.completed) ...[
+                                  Icon(Icons.alarm_rounded, size: 14, color: palette.inkSoft),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    TimeOfDay.fromDateTime(alarm).format(context),
+                                    style: TextStyle(fontSize: 12.5, color: palette.inkSoft),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
                                 if (dueIn != null)
-                                  Flexible(
-                                    child: Text(
-                                      dueLabel(dueIn, todo.due!),
-                                      style: TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: dueIn <= 0 ? FontWeight.w700 : FontWeight.w400,
-                                        color: dueIn < 0
-                                            ? Theme.of(context).colorScheme.error
-                                            : palette.inkSoft,
-                                      ),
+                                  Text(
+                                    dueLabel(dueIn, todo.due!),
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: dueIn <= 0 ? FontWeight.w700 : FontWeight.w400,
+                                      color: dueIn < 0
+                                          ? Theme.of(context).colorScheme.error
+                                          : palette.inkSoft,
                                     ),
                                   ),
                               ],
@@ -155,6 +180,85 @@ class TodoTile extends StatelessWidget {
         child: Transform.translate(offset: Offset(0, (1 - t) * 18), child: child),
       ),
       child: tile,
+    );
+  }
+}
+
+/// Stopwatch time; ticks every second while running, tap to pause/resume.
+class _TimerPill extends StatefulWidget {
+  const _TimerPill({required this.todo, this.onTap});
+
+  final Todo todo;
+  final VoidCallback? onTap;
+
+  @override
+  State<_TimerPill> createState() => _TimerPillState();
+}
+
+class _TimerPillState extends State<_TimerPill> {
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_TimerPill old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  void _sync() {
+    if (widget.todo.timing) {
+      _tick ??= Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    } else {
+      _tick?.cancel();
+      _tick = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Palette.of(context);
+    final running = widget.todo.timing;
+    final color = running ? palette.strataFor(DateTime.now()) : palette.inkSoft;
+    return Semantics(
+      button: widget.onTap != null,
+      label: running ? s.pauseStopwatch : s.startStopwatch,
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withAlpha(running ? 200 : 90)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(running ? Icons.pause_rounded : Icons.timer_outlined, size: 13, color: color),
+              const SizedBox(width: 3),
+              Text(
+                s.clock(widget.todo.elapsed(DateTime.now())),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: color,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

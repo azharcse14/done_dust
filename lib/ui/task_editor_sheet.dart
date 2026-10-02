@@ -13,6 +13,8 @@ typedef TaskDraft = ({
   String note,
   bool pinned,
   Repeat repeat,
+  DateTime? remindAt,
+  bool timing,
   bool duplicate,
 });
 
@@ -46,6 +48,8 @@ class _TaskEditorState extends State<_TaskEditor> {
   late final TextEditingController _note = TextEditingController(text: widget.editing?.note ?? '');
   late bool _pinned = widget.editing?.pinned ?? false;
   late Repeat _repeat = widget.editing?.repeat ?? Repeat.none;
+  late DateTime? _remindAt = widget.editing?.remindAt;
+  late bool _timing = widget.editing?.timing ?? false;
 
   @override
   void dispose() {
@@ -76,9 +80,32 @@ class _TaskEditorState extends State<_TaskEditor> {
         note: _note.text,
         pinned: _pinned,
         repeat: _repeat,
+        remindAt: _remindAt,
+        timing: _timing,
         duplicate: duplicate,
       ),
     );
+  }
+
+  /// Alarm on the due day (or today); a time already gone means tomorrow.
+  Future<void> _pickAlarm() async {
+    final now = DateTime.now();
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_remindAt ?? now.add(const Duration(hours: 1))),
+    );
+    if (picked == null || !mounted) return;
+    final day = _due ?? now;
+    var at = DateTime(day.year, day.month, day.day, picked.hour, picked.minute);
+    if (_due == null && !at.isAfter(now)) at = at.add(const Duration(days: 1));
+    setState(() => _remindAt = at);
+  }
+
+  String _alarmLabel(DateTime at) {
+    final time = TimeOfDay.fromDateTime(at).format(context);
+    final now = DateTime.now();
+    final today = at.year == now.year && at.month == now.month && at.day == now.day;
+    return s.alarmAt(today ? time : '$time, ${formatDay(at)}');
   }
 
   Future<void> _pickDue() async {
@@ -232,6 +259,20 @@ class _TaskEditorState extends State<_TaskEditor> {
                 onPressed: _pickDue,
                 onDeleted: _due == null ? null : () => setState(() => _due = null),
                 deleteButtonTooltipMessage: s.removeDueDate,
+              ),
+              InputChip(
+                avatar: const Icon(Icons.alarm_rounded, size: 18),
+                label: Text(_remindAt == null ? s.alarm : _alarmLabel(_remindAt!)),
+                onPressed: _pickAlarm,
+                onDeleted: _remindAt == null ? null : () => setState(() => _remindAt = null),
+                deleteButtonTooltipMessage: s.removeAlarm,
+              ),
+              FilterChip(
+                avatar: const Icon(Icons.timer_outlined, size: 18),
+                label: Text(s.stopwatch),
+                selected: _timing,
+                showCheckmark: false,
+                onSelected: (v) => setState(() => _timing = v),
               ),
               FilterChip(
                 avatar: const Icon(Icons.push_pin_outlined, size: 18),

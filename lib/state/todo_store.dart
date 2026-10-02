@@ -190,8 +190,11 @@ class TodoStore extends ChangeNotifier {
     String note = '',
     bool pinned = false,
     Repeat repeat = Repeat.none,
+    DateTime? remindAt,
+    bool timing = false,
   }) {
     if (due == null) (text, due) = parseDue(text, DateTime.now());
+    if (remindAt != null) _askForAlarms();
     final todo = Todo(
       id: _nextId(),
       text: text.trim(),
@@ -201,6 +204,8 @@ class TodoStore extends ChangeNotifier {
       note: note.trim(),
       pinned: pinned,
       repeat: repeat,
+      remindAt: remindAt,
+      startedAt: timing ? DateTime.now() : null,
     );
     _todos = [todo, ..._todos];
     _changed();
@@ -215,12 +220,16 @@ class TodoStore extends ChangeNotifier {
     String note = '',
     bool pinned = false,
     Repeat repeat = Repeat.none,
+    DateTime? remindAt,
+    bool timing = false,
   }) {
     if (due == null) (text, due) = parseDue(text, DateTime.now());
+    if (remindAt != null) _askForAlarms();
+    final now = DateTime.now();
     _todos = [
       for (final t in _todos)
         if (t.id == id)
-          t.copyWith(
+          (timing ? (t.timing ? t : t.copyWith(startedAt: now)) : t.stopTimer(now)).copyWith(
             text: text.trim(),
             priority: priority,
             due: due,
@@ -228,12 +237,26 @@ class TodoStore extends ChangeNotifier {
             note: note.trim(),
             pinned: pinned,
             repeat: repeat,
+            remindAt: remindAt,
+            clearRemindAt: remindAt == null,
           )
         else
           t,
     ];
     _changed();
   }
+
+  void toggleTimer(int id) {
+    final now = DateTime.now();
+    _todos = [
+      for (final t in _todos)
+        if (t.id == id) (t.timing ? t.stopTimer(now) : t.copyWith(startedAt: now)) else t,
+    ];
+    _changed();
+  }
+
+  /// An alarm is pointless without notifications, so asking is implied.
+  void _askForAlarms() => unawaited(_reminders?.requestPermission());
 
   void togglePin(int id) {
     _todos = [for (final t in _todos) t.id == id ? t.copyWith(pinned: !t.pinned) : t];
@@ -249,8 +272,10 @@ class TodoStore extends ChangeNotifier {
     final list = [..._todos];
     if (done) {
       final now = DateTime.now();
-      list[index] = t.copyWith(completedAt: now);
+      list[index] = t.stopTimer(now).copyWith(completedAt: now);
       if (t.repeat != Repeat.none) {
+        final due = nextDue(t.repeat, t.due, now);
+        final alarm = t.remindAt;
         list.insert(
           index,
           Todo(
@@ -258,10 +283,13 @@ class TodoStore extends ChangeNotifier {
             text: t.text,
             priority: t.priority,
             createdAt: now,
-            due: nextDue(t.repeat, t.due, now),
+            due: due,
             note: t.note,
             pinned: t.pinned,
             repeat: t.repeat,
+            remindAt: alarm == null
+                ? null
+                : DateTime(due.year, due.month, due.day, alarm.hour, alarm.minute),
           ),
         );
       }

@@ -16,6 +16,9 @@ class Todo {
     this.note = '',
     this.pinned = false,
     this.repeat = Repeat.none,
+    this.remindAt,
+    this.spent = Duration.zero,
+    this.startedAt,
   });
 
   final int id;
@@ -36,6 +39,23 @@ class Todo {
   /// Pinned tasks stay at the top of the list.
   final bool pinned;
   final Repeat repeat;
+
+  /// Alarm: a notification at this exact moment.
+  final DateTime? remindAt;
+
+  /// Stopwatch: time banked so far, plus the run since [startedAt] if it
+  /// is going.
+  final Duration spent;
+  final DateTime? startedAt;
+
+  bool get timing => startedAt != null;
+
+  Duration elapsed(DateTime now) =>
+      spent + (startedAt == null ? Duration.zero : now.difference(startedAt!));
+
+  /// Same task with the stopwatch paused and its run banked.
+  Todo stopTimer(DateTime now) =>
+      timing ? copyWith(spent: elapsed(now), clearStartedAt: true) : this;
 
   bool get completed => completedAt != null;
 
@@ -58,6 +78,11 @@ class Todo {
     String? note,
     bool? pinned,
     Repeat? repeat,
+    DateTime? remindAt,
+    bool clearRemindAt = false,
+    Duration? spent,
+    DateTime? startedAt,
+    bool clearStartedAt = false,
   }) {
     return Todo(
       id: id,
@@ -69,6 +94,9 @@ class Todo {
       note: note ?? this.note,
       pinned: pinned ?? this.pinned,
       repeat: repeat ?? this.repeat,
+      remindAt: clearRemindAt ? null : (remindAt ?? this.remindAt),
+      spent: spent ?? this.spent,
+      startedAt: clearStartedAt ? null : (startedAt ?? this.startedAt),
     );
   }
 
@@ -82,6 +110,9 @@ class Todo {
         if (note.isNotEmpty) 'note': note,
         if (pinned) 'pinned': true,
         if (repeat != Repeat.none) 'repeat': repeat.name,
+        if (remindAt != null) 'remindAt': remindAt!.millisecondsSinceEpoch,
+        if (spent > Duration.zero) 'spent': spent.inSeconds,
+        if (startedAt != null) 'startedAt': startedAt!.millisecondsSinceEpoch,
       };
 
   factory Todo.fromJson(Map<String, dynamic> json) {
@@ -100,9 +131,14 @@ class Todo {
       note: json['note'] as String? ?? '',
       pinned: json['pinned'] == true,
       repeat: Repeat.values.firstWhere((r) => r.name == json['repeat'], orElse: () => Repeat.none),
+      remindAt: _date(json['remindAt']),
+      spent: Duration(seconds: json['spent'] as int? ?? 0),
+      startedAt: _date(json['startedAt']),
     );
   }
 }
+
+DateTime? _date(Object? ms) => ms is int ? DateTime.fromMillisecondsSinceEpoch(ms) : null;
 
 /// Due date of the copy that replaces a finished repeating task: one step
 /// after its due date, or after today if that is later.
