@@ -151,6 +151,13 @@ class S {
   String get saveChanges => _t('Save changes', 'পরিবর্তন সেভ করুন');
   String addMany(int c) => _t('Add ${_tasks(c)}', '${_tasks(c)} যোগ করুন');
 
+  String get noteHint => _t('Note (optional)', 'নোট (ঐচ্ছিক)');
+  String get pinToTop => _t('Pin to top', 'উপরে পিন করুন');
+  String get unpin => _t('Unpin', 'পিন সরান');
+  String get repeatNever => _t('Once', 'একবার');
+  String get repeatDaily => _t('Daily', 'প্রতিদিন');
+  String get repeatWeekly => _t('Weekly', 'প্রতি সপ্তাহে');
+
   // Archive
   String get deletedFromArchive => _t('Deleted from archive', 'আর্কাইভ থেকে মুছে ফেলা হয়েছে');
   String get clearArchiveQ => _t('Clear the archive?', 'আর্কাইভ খালি করবেন?');

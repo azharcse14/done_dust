@@ -35,7 +35,7 @@ void main() {
     final before = store.todos.length;
     await tester.tap(find.byTooltip('Add task'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'milk\n\neggs\n bread ');
+    await tester.enterText(find.byType(TextField).first, 'milk\n\neggs\n bread ');
     await tester.pump();
     await tester.tap(find.text('Add 3 tasks'));
     await tester.pumpAndSettle();

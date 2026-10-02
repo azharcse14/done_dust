@@ -2,6 +2,9 @@
 /// low = light and bouncy, normal = sand, high = heavy stone.
 enum Priority { low, normal, high }
 
+/// A repeating task comes back, due one step later, when it is finished.
+enum Repeat { none, daily, weekly }
+
 class Todo {
   const Todo({
     required this.id,
@@ -10,6 +13,9 @@ class Todo {
     this.priority = Priority.normal,
     this.completedAt,
     this.due,
+    this.note = '',
+    this.pinned = false,
+    this.repeat = Repeat.none,
   });
 
   final int id;
@@ -23,6 +29,13 @@ class Todo {
 
   /// Optional day the task should be done by (time of day is ignored).
   final DateTime? due;
+
+  /// Optional detail shown under the task; never turned into letters.
+  final String note;
+
+  /// Pinned tasks stay at the top of the list.
+  final bool pinned;
+  final Repeat repeat;
 
   bool get completed => completedAt != null;
 
@@ -42,6 +55,9 @@ class Todo {
     bool reopen = false,
     DateTime? due,
     bool clearDue = false,
+    String? note,
+    bool? pinned,
+    Repeat? repeat,
   }) {
     return Todo(
       id: id,
@@ -50,6 +66,9 @@ class Todo {
       createdAt: createdAt,
       completedAt: reopen ? null : (completedAt ?? this.completedAt),
       due: clearDue ? null : (due ?? this.due),
+      note: note ?? this.note,
+      pinned: pinned ?? this.pinned,
+      repeat: repeat ?? this.repeat,
     );
   }
 
@@ -60,6 +79,9 @@ class Todo {
         'createdAt': createdAt.millisecondsSinceEpoch,
         'completedAt': completedAt?.millisecondsSinceEpoch,
         if (due != null) 'due': due!.millisecondsSinceEpoch,
+        if (note.isNotEmpty) 'note': note,
+        if (pinned) 'pinned': true,
+        if (repeat != Repeat.none) 'repeat': repeat.name,
       };
 
   factory Todo.fromJson(Map<String, dynamic> json) {
@@ -73,10 +95,19 @@ class Todo {
         orElse: () => Priority.normal,
       ),
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
-      completedAt: completed == null
-          ? null
-          : DateTime.fromMillisecondsSinceEpoch(completed as int),
+      completedAt: completed == null ? null : DateTime.fromMillisecondsSinceEpoch(completed as int),
       due: due == null ? null : DateTime.fromMillisecondsSinceEpoch(due as int),
+      note: json['note'] as String? ?? '',
+      pinned: json['pinned'] == true,
+      repeat: Repeat.values.firstWhere((r) => r.name == json['repeat'], orElse: () => Repeat.none),
     );
   }
+}
+
+/// Due date of the copy that replaces a finished repeating task: one step
+/// after its due date, or after today if that is later.
+DateTime nextDue(Repeat repeat, DateTime? due, DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+  final base = due == null || due.isBefore(today) ? today : due;
+  return DateTime(base.year, base.month, base.day + (repeat == Repeat.weekly ? 7 : 1));
 }

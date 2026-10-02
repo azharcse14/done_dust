@@ -109,38 +109,93 @@ class TodoStore extends ChangeNotifier {
     return maxId;
   }
 
-  Todo add(String text, Priority priority, {DateTime? due}) {
+  Todo add(
+    String text,
+    Priority priority, {
+    DateTime? due,
+    String note = '',
+    bool pinned = false,
+    Repeat repeat = Repeat.none,
+  }) {
     final todo = Todo(
       id: _nextId(),
       text: text.trim(),
       priority: priority,
       createdAt: DateTime.now(),
       due: due,
+      note: note.trim(),
+      pinned: pinned,
+      repeat: repeat,
     );
     _todos = [todo, ..._todos];
     _changed();
     return todo;
   }
 
-  void edit(int id, {required String text, required Priority priority, DateTime? due}) {
+  void edit(
+    int id, {
+    required String text,
+    required Priority priority,
+    DateTime? due,
+    String note = '',
+    bool pinned = false,
+    Repeat repeat = Repeat.none,
+  }) {
     _todos = [
       for (final t in _todos)
         if (t.id == id)
-          t.copyWith(text: text.trim(), priority: priority, due: due, clearDue: due == null)
+          t.copyWith(
+            text: text.trim(),
+            priority: priority,
+            due: due,
+            clearDue: due == null,
+            note: note.trim(),
+            pinned: pinned,
+            repeat: repeat,
+          )
         else
           t,
     ];
     _changed();
   }
 
+  void togglePin(int id) {
+    _todos = [for (final t in _todos) t.id == id ? t.copyWith(pinned: !t.pinned) : t];
+    _changed();
+  }
+
+  /// Finishing a repeating task also adds its next occurrence just above it;
+  /// unchecking it takes that copy away again (if it is still untouched).
   void setCompleted(int id, bool done) {
-    _todos = [
-      for (final t in _todos)
-        if (t.id == id)
-          (done ? t.copyWith(completedAt: DateTime.now()) : t.copyWith(reopen: true))
-        else
-          t,
-    ];
+    final index = _todos.indexWhere((t) => t.id == id);
+    if (index < 0) return;
+    final t = _todos[index];
+    final list = [..._todos];
+    if (done) {
+      final now = DateTime.now();
+      list[index] = t.copyWith(completedAt: now);
+      if (t.repeat != Repeat.none) {
+        list.insert(
+          index,
+          Todo(
+            id: _nextId(),
+            text: t.text,
+            priority: t.priority,
+            createdAt: now,
+            due: nextDue(t.repeat, t.due, now),
+            note: t.note,
+            pinned: t.pinned,
+            repeat: t.repeat,
+          ),
+        );
+      }
+    } else {
+      list[index] = t.copyWith(reopen: true);
+      if (t.repeat != Repeat.none) {
+        list.removeWhere((c) => !c.completed && c.text == t.text && c.createdAt == t.completedAt);
+      }
+    }
+    _todos = list;
     _changed();
   }
 

@@ -322,4 +322,48 @@ void main() {
       expect(w.isIdle, isTrue);
     });
   });
+
+  group('Notes, pins, repeats', () {
+    test('new fields round-trip and default when missing', () {
+      final t = Todo(
+          id: 1,
+          text: 'a',
+          createdAt: DateTime(2026),
+          note: 'n',
+          pinned: true,
+          repeat: Repeat.weekly);
+      final back = Todo.fromJson(t.toJson());
+      expect((back.note, back.pinned, back.repeat), ('n', true, Repeat.weekly));
+      final old = Todo.fromJson({'id': 1, 'text': 'a', 'createdAt': 0});
+      expect((old.note, old.pinned, old.repeat), ('', false, Repeat.none));
+    });
+
+    test('nextDue steps from the due date, or from today when overdue', () {
+      final now = DateTime(2026, 10, 2, 15);
+      expect(nextDue(Repeat.daily, null, now), DateTime(2026, 10, 3));
+      expect(nextDue(Repeat.weekly, DateTime(2026, 10, 5), now), DateTime(2026, 10, 12));
+      expect(nextDue(Repeat.daily, DateTime(2026, 9, 1), now), DateTime(2026, 10, 3));
+    });
+
+    test('finishing a repeating task adds the next one; unchecking takes it back', () async {
+      final store = await _emptyStore();
+      final t = store.add('water plants', Priority.normal, repeat: Repeat.daily);
+      store.setCompleted(t.id, true);
+      expect(store.todos.length, 2);
+      final next = store.todos.firstWhere((x) => !x.completed);
+      expect((next.text, next.repeat), ('water plants', Repeat.daily));
+      expect(next.due, isNotNull);
+
+      store.setCompleted(t.id, false);
+      expect(store.todos.map((x) => x.id), [t.id]);
+      expect(store.todos.single.completed, isFalse);
+    });
+
+    test('togglePin flips the flag', () async {
+      final store = await _emptyStore();
+      final t = store.add('a', Priority.normal);
+      store.togglePin(t.id);
+      expect(store.byId(t.id)!.pinned, isTrue);
+    });
+  });
 }

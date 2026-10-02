@@ -6,7 +6,15 @@ import '../theme.dart';
 
 /// [texts] has one entry per pasted line when adding; editing always has
 /// exactly one. [duplicate] asks for a copy instead of saving the edit.
-typedef TaskDraft = ({List<String> texts, Priority priority, DateTime? due, bool duplicate});
+typedef TaskDraft = ({
+  List<String> texts,
+  Priority priority,
+  DateTime? due,
+  String note,
+  bool pinned,
+  Repeat repeat,
+  bool duplicate,
+});
 
 /// Every letter becomes a particle; keeps one task well under the jar's
 /// letter limit.
@@ -35,10 +43,14 @@ class _TaskEditorState extends State<_TaskEditor> {
   late final TextEditingController _text = TextEditingController(text: widget.editing?.text ?? '');
   late Priority _priority = widget.editing?.priority ?? Priority.normal;
   late DateTime? _due = widget.editing?.due;
+  late final TextEditingController _note = TextEditingController(text: widget.editing?.note ?? '');
+  late bool _pinned = widget.editing?.pinned ?? false;
+  late Repeat _repeat = widget.editing?.repeat ?? Repeat.none;
 
   @override
   void dispose() {
     _text.dispose();
+    _note.dispose();
     super.dispose();
   }
 
@@ -57,7 +69,15 @@ class _TaskEditorState extends State<_TaskEditor> {
     final texts = _lines(_text.text);
     if (texts.isEmpty) return;
     Navigator.of(context).pop<TaskDraft>(
-      (texts: texts, priority: _priority, due: _due, duplicate: duplicate),
+      (
+        texts: texts,
+        priority: _priority,
+        due: _due,
+        note: _note.text,
+        pinned: _pinned,
+        repeat: _repeat,
+        duplicate: duplicate,
+      ),
     );
   }
 
@@ -86,7 +106,8 @@ class _TaskEditorState extends State<_TaskEditor> {
     final palette = Palette.of(context);
     final isEdit = widget.editing != null;
 
-    return Padding(
+    // Scrolls when the keyboard leaves too little room for every field.
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         20,
         0,
@@ -121,6 +142,25 @@ class _TaskEditorState extends State<_TaskEditor> {
             style: taskTextStyle(color: palette.ink, priority: _priority),
             decoration: InputDecoration(
               hintText: isEdit ? s.whatNeedsDoing : s.whatNeedsDoingMany,
+              filled: true,
+              fillColor: palette.glass,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _note,
+            minLines: 1,
+            maxLines: 3,
+            textCapitalization: TextCapitalization.sentences,
+            style: TextStyle(color: palette.ink, fontSize: 14),
+            decoration: InputDecoration(
+              hintText: s.noteHint,
+              isDense: true,
+              prefixIcon: const Icon(Icons.notes_rounded, size: 20),
               filled: true,
               fillColor: palette.glass,
               border: OutlineInputBorder(
@@ -164,12 +204,38 @@ class _TaskEditorState extends State<_TaskEditor> {
                 onDeleted: _due == null ? null : () => setState(() => _due = null),
                 deleteButtonTooltipMessage: s.removeDueDate,
               ),
+              FilterChip(
+                avatar: const Icon(Icons.push_pin_outlined, size: 18),
+                label: Text(s.pinToTop),
+                selected: _pinned,
+                showCheckmark: false,
+                onSelected: (v) => setState(() => _pinned = v),
+              ),
               if (isEdit)
                 TextButton.icon(
                   onPressed: () => _submit(duplicate: true),
                   icon: const Icon(Icons.copy_rounded, size: 18),
                   label: Text(s.duplicate),
                 ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.repeat_rounded, size: 20, color: palette.inkSoft),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SegmentedButton<Repeat>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(value: Repeat.none, label: Text(s.repeatNever)),
+                    ButtonSegment(value: Repeat.daily, label: Text(s.repeatDaily)),
+                    ButtonSegment(value: Repeat.weekly, label: Text(s.repeatWeekly)),
+                  ],
+                  selected: {_repeat},
+                  onSelectionChanged: (r) => setState(() => _repeat = r.first),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),

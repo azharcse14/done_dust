@@ -317,7 +317,8 @@ class _TodoScreenState extends State<TodoScreen>
     if (draft == null || !mounted) return;
     // Reversed so a pasted list keeps its order at the top.
     for (final text in draft.texts.reversed) {
-      store.add(text, draft.priority, due: draft.due);
+      store.add(text, draft.priority,
+          due: draft.due, note: draft.note, pinned: draft.pinned, repeat: draft.repeat);
     }
     if (draft.texts.length > 1) _snack(s.added(draft.texts.length));
     if (_scroll.hasClients) {
@@ -330,10 +331,17 @@ class _TodoScreenState extends State<TodoScreen>
     final draft = await showTaskEditor(context, editing: todo);
     if (draft == null || !mounted) return;
     if (draft.duplicate) {
-      store.add(draft.texts.single, draft.priority, due: draft.due);
+      store.add(draft.texts.single, draft.priority,
+          due: draft.due, note: draft.note, pinned: draft.pinned, repeat: draft.repeat);
       _snack(s.duplicated(_short(draft.texts.single)));
     } else {
-      store.edit(todo.id, text: draft.texts.single, priority: draft.priority, due: draft.due);
+      store.edit(todo.id,
+          text: draft.texts.single,
+          priority: draft.priority,
+          due: draft.due,
+          note: draft.note,
+          pinned: draft.pinned,
+          repeat: draft.repeat);
     }
   }
 
@@ -432,9 +440,16 @@ class _TodoScreenState extends State<TodoScreen>
                 }))
           t,
     ];
-    if (_sort == _Sort.manual) return shown;
     // List.sort is not stable; break ties on the original position.
     final pos = {for (var i = 0; i < shown.length; i++) shown[i].id: i};
+    int byPin(Todo a, Todo b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+    if (_sort == _Sort.manual) {
+      return shown
+        ..sort((a, b) {
+          final c = byPin(a, b);
+          return c != 0 ? c : pos[a.id]!.compareTo(pos[b.id]!);
+        });
+    }
     int byDue(Todo a, Todo b) => switch ((a.due, b.due)) {
           (null, null) => 0,
           (null, _) => 1,
@@ -443,8 +458,10 @@ class _TodoScreenState extends State<TodoScreen>
         };
     return shown
       ..sort((a, b) {
-        final c =
-            _sort == _Sort.priority ? b.priority.index.compareTo(a.priority.index) : byDue(a, b);
+        var c = byPin(a, b);
+        if (c == 0) {
+          c = _sort == _Sort.priority ? b.priority.index.compareTo(a.priority.index) : byDue(a, b);
+        }
         return c != 0 ? c : pos[a.id]!.compareTo(pos[b.id]!);
       });
   }
@@ -604,6 +621,7 @@ class _TodoScreenState extends State<TodoScreen>
                           world: _world,
                           onToggle: () => _toggle(t),
                           onEdit: () => _edit(t),
+                          onPin: () => store.togglePin(t.id),
                           onSwiped: (dir, v) => _swiped(t, dir, v),
                         );
                       },

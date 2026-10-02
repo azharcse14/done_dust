@@ -17,6 +17,7 @@ class TodoTile extends StatelessWidget {
     required this.world,
     required this.onToggle,
     required this.onEdit,
+    required this.onPin,
     required this.onSwiped,
     this.enterDelay,
   });
@@ -26,6 +27,7 @@ class TodoTile extends StatelessWidget {
   final ParticleWorld world;
   final VoidCallback onToggle;
   final VoidCallback onEdit;
+  final VoidCallback onPin;
 
   /// [direction] is +1 for a swipe to the right, -1 to the left.
   final void Function(double direction, double velocity) onSwiped;
@@ -81,18 +83,43 @@ class TodoTile extends StatelessWidget {
                             hidden: todo.completed || world.has(todo.id),
                           ),
                         ),
-                        if (dueIn != null)
+                        if (todo.note.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Text(
+                              todo.note,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 13, height: 1.3, color: palette.inkSoft),
+                            ),
+                          ),
+                        if (dueIn != null || todo.pinned || todo.repeat != Repeat.none)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              dueLabel(dueIn, todo.due!),
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: dueIn <= 0 ? FontWeight.w700 : FontWeight.w400,
-                                color: dueIn < 0
-                                    ? Theme.of(context).colorScheme.error
-                                    : palette.inkSoft,
-                              ),
+                            child: Row(
+                              children: [
+                                if (todo.pinned) ...[
+                                  Icon(Icons.push_pin_rounded, size: 14, color: palette.inkSoft),
+                                  const SizedBox(width: 6),
+                                ],
+                                if (todo.repeat != Repeat.none) ...[
+                                  Icon(Icons.repeat_rounded, size: 14, color: palette.inkSoft),
+                                  const SizedBox(width: 6),
+                                ],
+                                if (dueIn != null)
+                                  Flexible(
+                                    child: Text(
+                                      dueLabel(dueIn, todo.due!),
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: dueIn <= 0 ? FontWeight.w700 : FontWeight.w400,
+                                        color: dueIn < 0
+                                            ? Theme.of(context).colorScheme.error
+                                            : palette.inkSoft,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                       ],
@@ -110,6 +137,7 @@ class TodoTile extends StatelessWidget {
     final tile = Semantics(
       customSemanticsActions: {
         CustomSemanticsAction(label: s.delete): () => onSwiped(1, 0),
+        CustomSemanticsAction(label: todo.pinned ? s.unpin : s.pinToTop): onPin,
       },
       child: row,
     );
