@@ -28,7 +28,7 @@ class GlyphCache {
     }
   }
 
-  _Glyph get(String glyph, Priority priority, Color color) {
+  _Glyph _get(String glyph, Priority priority, Color color) {
     final key = (glyph, priority, color);
     final hit = _map[key];
     if (hit != null) return hit;
@@ -66,7 +66,7 @@ class ParticlePainter extends CustomPainter {
       final t = (g.colorT * 6).round() / 6;
       final color = Color.lerp(ink, g.dayColor, t) ?? ink;
       for (final p in g.particles) {
-        final glyph = glyphs.get(p.glyph, g.priority, color);
+        final glyph = glyphs._get(p.glyph, g.priority, color);
         canvas
           ..save()
           ..translate(p.cx, p.cy)

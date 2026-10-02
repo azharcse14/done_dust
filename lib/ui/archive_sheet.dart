@@ -65,7 +65,7 @@ class _ArchiveList extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    fontVariations: [FontVariation('wght', 700)],
+                    fontVariations: const [FontVariation('wght', 700)],
                     color: palette.ink,
                   ),
                 ),

@@ -5,13 +5,10 @@ Flutter port of the original Jetpack Compose app, with new features on top.
 
 ## Run it
 
-This folder contains `lib/`, `assets/` and `pubspec.yaml` only. Generate the
-platform folders once, then run:
-
 ```bash
-flutter create --org com.bitbytestudio --project-name physics_todo .
 flutter pub get
 flutter run
+flutter test
 ```
 
 Requires Flutter 3.19 or newer. No extra Android or iOS permissions are needed.
@@ -37,6 +34,8 @@ Tilt and shake only work on a real device; on an emulator use
 - **Sound and vibration** scale with impact speed and are throttled.
   Sounds mix with your music instead of pausing it. Both can be turned off
   in the menu.
+- **The jar has a limit.** Past 600 letters the oldest finished tasks are
+  thrown out and archived, so the simulation stays smooth.
 - **Everything persists**, including where each letter came to rest.
   Positions are stored relative to the jar, so the pile survives a
   different screen size.
