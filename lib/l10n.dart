@@ -188,6 +188,21 @@ class S {
   String statsLine(int total, int open, int streakDays) => bn
       ? 'মোট ${n(total)}টি শেষ · ${n(open)}টি বাকি · ${streak(streakDays)}'
       : '$total finished in total · $open open · ${streak(streakDays)}';
+  String milestone(int d) =>
+      _t('$d-day streak! Keep the dust falling.', '${n(d)} দিনের ধারা! এভাবেই চালিয়ে যান।');
+  String bestStreak(int d) =>
+      _t('Best streak: $d ${d == 1 ? 'day' : 'days'}', 'সেরা ধারা: ${n(d)} দিন');
+  String weekCompare(int now, int last) {
+    final diff = now - last;
+    final trend = last == 0 || diff == 0
+        ? ''
+        : ' (${diff > 0 ? '+' : '−'}${n((diff.abs() * 100 / last).round())}%)';
+    return _t('This week $now · last week $last$trend',
+        'এই সপ্তাহে ${n(now)} · গত সপ্তাহে ${n(last)}$trend');
+  }
+
+  String get last12Weeks => _t('Last 12 weeks', 'গত ১২ সপ্তাহ');
+  String heatCell(String day, int c) => _t('$day: $c finished', '$day: ${n(c)}টি শেষ');
   String bestDay(String day) => _t('Best day: $day', 'সেরা দিন: $day');
   String finishedOn(String day, int c) => _t('$day: $c finished', '$day: ${n(c)}টি শেষ');
 

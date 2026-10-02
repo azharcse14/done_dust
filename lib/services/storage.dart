@@ -14,6 +14,7 @@ class StoredState {
     required this.theme,
     required this.language,
     required this.remindersOn,
+    required this.bestStreak,
     required this.dailyGoal,
     required this.firstRun,
   });
@@ -26,6 +27,7 @@ class StoredState {
   final String? theme;
   final String? language;
   final bool remindersOn;
+  final int bestStreak;
 
   /// Tasks to finish per day; 0 = no goal.
   final int dailyGoal;
@@ -48,6 +50,7 @@ class Storage {
   static const _kGoal = 'dailyGoal';
   static const _kLanguage = 'language';
   static const _kReminders = 'reminders';
+  static const _kBestStreak = 'bestStreak';
 
   SharedPreferences? _prefs;
 
@@ -73,6 +76,7 @@ class Storage {
       theme: prefs.getString(_kTheme),
       language: prefs.getString(_kLanguage),
       remindersOn: prefs.getBool(_kReminders) ?? false,
+      bestStreak: prefs.getInt(_kBestStreak) ?? 0,
       dailyGoal: prefs.getInt(_kGoal) ?? 0,
       firstRun: rawTasks == null && prefs.getString(_kTodos) == null,
     );
@@ -92,6 +96,11 @@ class Storage {
   Future<void> savePile(Map<String, dynamic> pile) async {
     final prefs = _prefs ??= await SharedPreferences.getInstance();
     await prefs.setString(_kPile, jsonEncode(pile));
+  }
+
+  Future<void> saveBestStreak(int days) async {
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.setInt(_kBestStreak, days);
   }
 
   Future<void> saveSettings({

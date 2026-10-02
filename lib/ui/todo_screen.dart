@@ -294,7 +294,9 @@ class _TodoScreenState extends State<TodoScreen>
         );
       }
       store.setCompleted(todo.id, true);
-      if (store.todos.every((t) => t.completed)) {
+      if (store.streakMilestoneJustNow() case final days?) {
+        _celebrate(s.milestone(days));
+      } else if (store.todos.every((t) => t.completed)) {
         _celebrate(s.allDone);
       } else if (store.reachedGoalJustNow()) {
         _celebrate(s.goalReached(store.dailyGoal));

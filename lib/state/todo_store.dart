@@ -85,6 +85,65 @@ class TodoStore extends ChangeNotifier {
 
   int get doneTotal => _completions.length;
 
+  /// Finished tasks per calendar day (UTC midnight keys), for the heatmap.
+  Map<DateTime, int> doneByDate() {
+    final counts = <DateTime, int>{};
+    for (final c in _completions) {
+      final d = DateTime.utc(c.year, c.month, c.day);
+      counts[d] = (counts[d] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  /// Finished this week and last week, weeks starting Monday.
+  (int, int) weekCounts([DateTime? now]) {
+    final n = now ?? DateTime.now();
+    final monday = DateTime.utc(n.year, n.month, n.day - (n.weekday - 1));
+    final lastMonday = monday.subtract(const Duration(days: 7));
+    var (thisWeek, lastWeek) = (0, 0);
+    for (final c in _completions) {
+      final d = DateTime.utc(c.year, c.month, c.day);
+      if (!d.isBefore(monday)) {
+        thisWeek++;
+      } else if (!d.isBefore(lastMonday)) {
+        lastWeek++;
+      }
+    }
+    return (thisWeek, lastWeek);
+  }
+
+  /// Longest run of days in a row seen in the history still on hand.
+  int _longestRun() {
+    final days = doneByDate().keys.toList()..sort();
+    var (best, run) = (0, 0);
+    for (var i = 0; i < days.length; i++) {
+      run = i > 0 && days[i].difference(days[i - 1]).inDays == 1 ? run + 1 : 1;
+      best = math.max(best, run);
+    }
+    return best;
+  }
+
+  int _savedBestStreak = 0;
+
+  /// Kept on disk, so clearing the archive can't shrink the record.
+  int get bestStreak => math.max(_savedBestStreak, _longestRun());
+
+  static const streakMilestones = [7, 30, 100, 365];
+  DateTime? _milestoneCelebrated;
+
+  /// The streak length when today's finish just reached a milestone, once
+  /// per day; otherwise null.
+  int? streakMilestoneJustNow() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final run = streak();
+    if (!streakMilestones.contains(run) || doneToday() == 0 || _milestoneCelebrated == today) {
+      return null;
+    }
+    _milestoneCelebrated = today;
+    return run;
+  }
+
   /// Plain-text checklist of the current list, for the clipboard.
   String exportText() => [
         for (final t in _todos) '- [${t.completed ? 'x' : ' '}] ${t.text}',
@@ -104,6 +163,7 @@ class TodoStore extends ChangeNotifier {
     dailyGoal = s.dailyGoal;
     setLanguage(s.language ?? 'system', save: false);
     remindersOn = s.remindersOn;
+    _savedBestStreak = s.bestStreak;
     _syncReminders();
     loaded = true;
     notifyListeners();
@@ -208,6 +268,10 @@ class TodoStore extends ChangeNotifier {
     }
     _todos = list;
     _changed();
+    if (done && bestStreak > _savedBestStreak) {
+      _savedBestStreak = bestStreak;
+      unawaited(_save(_storage.saveBestStreak(_savedBestStreak)));
+    }
   }
 
   /// Returns the removed task and its position, for undo.
