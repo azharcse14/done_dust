@@ -137,8 +137,19 @@ class _SettingsState extends State<_Settings> {
               ThemeMode.dark: s.themeDark,
             }, store.themeMode, store.setThemeMode),
             label(s.language),
-            choice({'system': s.themeSystem, 'en': 'English', 'bn': 'বাংলা'}, store.language,
-                store.setLanguage),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final MapEntry(:key, :value) in {'system': s.themeSystem, ...languageNames}.entries)
+                  ChoiceChip(
+                    label: Text(value),
+                    selected: store.language == key,
+                    showCheckmark: false,
+                    onSelected: (_) => store.setLanguage(key),
+                  ),
+              ],
+            ),
             label('${s.jarStyle} · ${s.jarStyleHint}'),
             Wrap(
               spacing: 8,

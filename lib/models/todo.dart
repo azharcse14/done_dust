@@ -148,34 +148,78 @@ DateTime nextDue(Repeat repeat, DateTime? due, DateTime now) {
   return DateTime(base.year, base.month, base.day + (repeat == Repeat.weekly ? 7 : 1));
 }
 
+/// Words that set a due date, in every UI language, lowercase: 0, 1 or 7 are
+/// days ahead, 10 + i is weekday i (Monday 0).
+const _dueWords = {
+  // English
+  'today': 0, 'tonight': 0, 'tomorrow': 1, 'tmrw': 1, 'tmr': 1, 'next week': 7,
+  'mon': 10, 'monday': 10, 'tue': 11, 'tues': 11, 'tuesday': 11, 'wed': 12, 'wednesday': 12,
+  'thu': 13, 'thur': 13, 'thurs': 13, 'thursday': 13, 'fri': 14, 'friday': 14,
+  'sat': 15, 'saturday': 15, 'sun': 16, 'sunday': 16,
+  // Bangla, "বার" is optional after a weekday
+  'আজ': 0, 'আজকে': 0, 'আজই': 0, 'আগামীকাল': 1, 'কাল': 1, 'কালকে': 1, 'সামনের সপ্তাহে': 7,
+  'সোম': 10, 'মঙ্গল': 11, 'বুধ': 12, 'বৃহস্পতি': 13, 'শুক্র': 14, 'শনি': 15, 'রবি': 16,
+  // Chinese
+  '今天': 0, '明天': 1, '下周': 7, '下星期': 7,
+  '周一': 10, '周二': 11, '周三': 12, '周四': 13, '周五': 14, '周六': 15, '周日': 16, '周天': 16,
+  '星期一': 10, '星期二': 11, '星期三': 12, '星期四': 13, '星期五': 14, '星期六': 15,
+  '星期日': 16, '星期天': 16,
+  // Hindi
+  'आज': 0, 'कल': 1, 'अगले हफ़्ते': 7, 'अगले हफ्ते': 7, 'अगले सप्ताह': 7,
+  'सोमवार': 10, 'मंगलवार': 11, 'बुधवार': 12, 'गुरुवार': 13, 'शुक्रवार': 14, 'शनिवार': 15,
+  'रविवार': 16,
+  // Spanish
+  'hoy': 0, 'mañana': 1, 'manana': 1, 'la próxima semana': 7, 'la proxima semana': 7,
+  'la semana que viene': 7,
+  'lunes': 10, 'martes': 11, 'miércoles': 12, 'miercoles': 12, 'jueves': 13, 'viernes': 14,
+  'sábado': 15, 'sabado': 15, 'domingo': 16,
+  // French
+  "aujourd'hui": 0, 'aujourd’hui': 0, 'demain': 1, 'la semaine prochaine': 7,
+  'lundi': 10, 'mardi': 11, 'mercredi': 12, 'jeudi': 13, 'vendredi': 14, 'samedi': 15,
+  'dimanche': 16,
+  // Arabic
+  'اليوم': 0, 'غدا': 1, 'غدًا': 1, 'غداً': 1, 'بكرة': 1, 'الأسبوع القادم': 7, 'الاسبوع القادم': 7,
+  'الاثنين': 10, 'الإثنين': 10, 'الثلاثاء': 11, 'الأربعاء': 12, 'الاربعاء': 12, 'الخميس': 13,
+  'الجمعة': 14, 'السبت': 15, 'الأحد': 16, 'الاحد': 16,
+  // Portuguese, "-feira" is optional after a weekday
+  'hoje': 0, 'amanhã': 1, 'amanha': 1, 'semana que vem': 7, 'próxima semana': 7,
+  'proxima semana': 7,
+  'segunda': 10, 'terça': 11, 'terca': 11, 'quarta': 12, 'quinta': 13, 'sexta': 14,
+  // (sábado and domingo are shared with Spanish)
+  // Russian
+  'сегодня': 0, 'завтра': 1, 'на следующей неделе': 7,
+  'понедельник': 10, 'вторник': 11, 'среда': 12, 'среду': 12, 'четверг': 13, 'пятница': 14,
+  'пятницу': 14, 'суббота': 15, 'субботу': 15, 'воскресенье': 16,
+  // Urdu
+  'آج': 0, 'کل': 1, 'اگلے ہفتے': 7,
+  'پیر': 10, 'منگل': 11, 'بدھ': 12, 'جمعرات': 13, 'جمعہ': 14, 'ہفتہ': 15, 'اتوار': 16,
+  // Indonesian
+  'hari ini': 0, 'besok': 1, 'minggu depan': 7,
+  'senin': 10, 'selasa': 11, 'rabu': 12, 'kamis': 13, 'jumat': 14, "jum'at": 14, 'sabtu': 15,
+  'minggu': 16,
+  // German
+  'heute': 0, 'morgen': 1, 'nächste woche': 7, 'naechste woche': 7,
+  'montag': 10, 'dienstag': 11, 'mittwoch': 12, 'donnerstag': 13, 'freitag': 14,
+  'samstag': 15, 'sonntag': 16,
+};
+
 final _dueWord = RegExp(
-  r'\s+(?:(?:on|by|due)\s+)?'
-  r'(today|tonight|tomorrow|tmrw|tmr|next week|'
-  r'mon(?:day)?|tue(?:s|sday)?|wed(?:nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?|'
-  r'আজ|আজকে|আজই|আগামীকাল|কাল|কালকে|সামনের সপ্তাহে|'
-  r'সোম|মঙ্গল|বুধ|বৃহস্পতি|শুক্র|শনি|রবি)(?:বার)?\s*$',
+  // Chinese needs no space before the word.
+  r'(?:\s+|(?=[一-鿿]))'
+  r'(?:(?:on|by|due|el|para el|para|le|pour|am|bis|na|no|até|в|во|до|pada hari|pada|hari|يوم)\s+)?'
+  '(${(_dueWords.keys.toList()..sort((a, b) => b.length - a.length)).map(RegExp.escape).join('|')})'
+  r'(?:বার|-feira)?\s*$',
   caseSensitive: false,
 );
 
 /// "call mom tomorrow" → ("call mom", tomorrow). Only a word at the very
 /// end counts, so "Today's report" stays as typed. A weekday means the next
-/// one after today. English and Bangla both work in either UI language.
+/// one after today. Every UI language's words work in any UI language.
 (String, DateTime?) parseDue(String text, DateTime now) {
   final m = _dueWord.firstMatch(text);
   if (m == null || m.start == 0) return (text, null);
-  final word = m[1]!.toLowerCase();
-  final days = switch (word) {
-    'today' || 'tonight' || 'আজ' || 'আজকে' || 'আজই' => 0,
-    'tomorrow' || 'tmrw' || 'tmr' || 'আগামীকাল' || 'কাল' || 'কালকে' => 1,
-    'next week' || 'সামনের সপ্তাহে' => 7,
-    _ => () {
-        const en = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        const bn = ['সোম', 'মঙ্গল', 'বুধ', 'বৃহস্পতি', 'শুক্র', 'শনি', 'রবি'];
-        var i = en.indexWhere(word.startsWith);
-        if (i < 0) i = bn.indexOf(word);
-        final ahead = (i + 1 - now.weekday) % 7;
-        return ahead == 0 ? 7 : ahead;
-      }(),
-  };
+  final v = _dueWords[m[1]!.toLowerCase()]!;
+  final ahead = (v - 10 + 1 - now.weekday) % 7;
+  final days = v < 10 ? v : (ahead == 0 ? 7 : ahead);
   return (text.substring(0, m.start).trim(), DateTime(now.year, now.month, now.day + days));
 }

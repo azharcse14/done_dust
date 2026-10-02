@@ -378,6 +378,14 @@ void main() {
       expect(parseDue('review fri', fri), ('review', DateTime(2026, 10, 9)));
       expect(parseDue('বাজার করা আগামীকাল', fri), ('বাজার করা', DateTime(2026, 10, 3)));
       expect(parseDue('মিটিং সোমবার', fri), ('মিটিং', DateTime(2026, 10, 5)));
+      expect(parseDue('买牛奶明天', fri), ('买牛奶', DateTime(2026, 10, 3)));
+      expect(parseDue('Arzt am Montag', fri), ('Arzt', DateTime(2026, 10, 5)));
+      expect(parseDue('llamar a mamá Mañana', fri), ('llamar a mamá', DateTime(2026, 10, 3)));
+      expect(parseDue('relatório sexta-feira', fri), ('relatório', DateTime(2026, 10, 9)));
+      expect(parseDue('позвонить в пятницу', fri), ('позвонить', DateTime(2026, 10, 9)));
+      expect(parseDue('rapat minggu depan', fri), ('rapat', DateTime(2026, 10, 9)));
+      expect(parseDue('rapat minggu', fri), ('rapat', DateTime(2026, 10, 4)));
+      expect(parseDue('اجتماع غدًا', fri), ('اجتماع', DateTime(2026, 10, 3)));
     });
 
     test('words elsewhere, or alone, are left as typed', () {
@@ -449,8 +457,8 @@ void main() {
   });
 
   test('weekCompare shows the change against last week', () {
-    expect(const S(false).weekCompare(6, 4), 'This week 6 · last week 4 (+50%)');
-    expect(const S(true).weekCompare(2, 4), 'এই সপ্তাহে ২ · গত সপ্তাহে ৪ (−৫০%)');
+    expect(const S().weekCompare(6, 4), 'This week 6 · last week 4 (+50%)');
+    expect(const SBn().weekCompare(2, 4), 'এই সপ্তাহে ২ · গত সপ্তাহে ৪ (−৫০%)');
   });
 
   group('Backup, restore all, jar style', () {
@@ -541,9 +549,9 @@ void main() {
     });
 
     test('clock formats like a stopwatch, in either language', () {
-      expect(const S(false).clock(const Duration(minutes: 4, seconds: 5)), '4:05');
-      expect(const S(false).clock(const Duration(hours: 1, minutes: 2, seconds: 9)), '1:02:09');
-      expect(const S(true).clock(const Duration(minutes: 4, seconds: 5)), '৪:০৫');
+      expect(const S().clock(const Duration(minutes: 4, seconds: 5)), '4:05');
+      expect(const S().clock(const Duration(hours: 1, minutes: 2, seconds: 9)), '1:02:09');
+      expect(const SBn().clock(const Duration(minutes: 4, seconds: 5)), '৪:০৫');
     });
   });
 }
