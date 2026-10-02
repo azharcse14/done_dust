@@ -83,9 +83,11 @@ class _ArchiveListState extends State<_ArchiveList> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 12, 8),
+          padding: const EdgeInsets.fromLTRB(8, 0, 12, 8),
           child: Row(
             children: [
+              BackButton(color: palette.ink),
+              const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   s.archive,

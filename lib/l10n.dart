@@ -102,7 +102,7 @@ class S {
   String get more => _t('More', 'আরও');
   String archiveCount(int c) => c == 0 ? archive : '$archive (${n(c)})';
   String get copyList => _t('Copy list', 'তালিকা কপি করুন');
-  String get emptyTheJar => _t('Empty the jar', 'বয়াম খালি করুন');
+  String get emptyTheJar => _t('Archive finished tasks', 'শেষ করা কাজ আর্কাইভ করুন');
   String get sound => _t('Sound', 'শব্দ');
   String get vibration => _t('Vibration', 'ভাইব্রেশন');
   String get settings => _t('Settings', 'সেটিংস');
@@ -159,8 +159,9 @@ class S {
   String get keep => _t('Keep', 'রাখুন');
   String get clearArchive => _t('Clear archive', 'আর্কাইভ খালি করুন');
   String get searchArchive => _t('Search archive', 'আর্কাইভে খুঁজুন');
-  String get archiveEmpty =>
-      _t('Shake your phone to move finished tasks here.', 'শেষ করা কাজ এখানে আনতে ফোন ঝাঁকান।');
+  String get archiveEmpty => _t(
+      'Finished tasks come here when you shake your phone, or tap ⋮ › Archive finished tasks.',
+      'ফোন ঝাঁকালে, অথবা ⋮ › শেষ করা কাজ আর্কাইভ করুন চাপলে, শেষ করা কাজ এখানে আসবে।');
   String noArchiveMatch(String q) =>
       _t('No archived task matches “$q”.', '“$q” এর সাথে কোনো আর্কাইভ কাজ মেলেনি।');
   String doneOn(String day) => _t('Done $day', '$day শেষ');

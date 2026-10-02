@@ -742,7 +742,7 @@ class _Header extends StatelessWidget {
               _item(_MenuAction.archive, Icons.inventory_2_outlined, s.archiveCount(archivedCount)),
               _item(_MenuAction.stats, Icons.bar_chart_rounded, s.stats),
               _item(_MenuAction.copy, Icons.copy_rounded, s.copyList),
-              _item(_MenuAction.emptyJar, Icons.delete_sweep_outlined, s.emptyTheJar),
+              _item(_MenuAction.emptyJar, Icons.archive_outlined, s.emptyTheJar),
               const PopupMenuDivider(),
               _item(_MenuAction.settings, Icons.tune_rounded, s.settings),
             ],
@@ -755,7 +755,11 @@ class _Header extends StatelessWidget {
 
 PopupMenuItem<_MenuAction> _item(_MenuAction value, IconData icon, String label) => PopupMenuItem(
       value: value,
-      child: Row(children: [Icon(icon, size: 20), const SizedBox(width: 14), Text(label)]),
+      child: Row(children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 14),
+        Flexible(child: Text(label))
+      ]),
     );
 
 /// Old text slides up and out as the new one slides in.
