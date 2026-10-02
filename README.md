@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="web/icons/Icon-512.png" width="112" alt="Done Dust icon: letters falling into a jar">
+![Done Dust icon](web/icons/Icon-192.png)
 
 # Done Dust
 
@@ -17,7 +17,7 @@ and settle into a glass jar you can tilt, shake and poke.*
 
 <br>
 
-<img src="docs/hero.svg" width="680" alt="Animation: a task is checked, its letters turn plum and fall into a jar layered by weekday">
+![A task is checked and its letters fall into the jar](docs/hero.svg)
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.19%2B-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3.3%2B-0175C2?style=for-the-badge&logo=dart&logoColor=white)
