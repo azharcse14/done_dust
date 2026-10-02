@@ -175,9 +175,7 @@ class _TodoScreenState extends State<TodoScreen>
     // Drop letters whose task no longer exists (unless they are leaving).
     final stale = [
       for (final g in _world.groups)
-        if (store.byId(g.taskId) == null &&
-            g.phase != Phase.blowing &&
-            g.phase != Phase.ejecting)
+        if (store.byId(g.taskId) == null && g.phase != Phase.blowing && g.phase != Phase.ejecting)
           g.taskId,
     ];
     for (final id in stale) {
@@ -307,7 +305,8 @@ class _TodoScreenState extends State<TodoScreen>
     }
     if (draft.texts.length > 1) _snack('Added ${draft.texts.length} tasks');
     if (_scroll.hasClients) {
-      unawaited(_scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut));
+      unawaited(
+          _scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut));
     }
   }
 
@@ -348,7 +347,10 @@ class _TodoScreenState extends State<TodoScreen>
   }
 
   void _emptyJar() {
-    final done = {for (final t in store.todos) if (t.completed) t.id};
+    final done = {
+      for (final t in store.todos)
+        if (t.completed) t.id
+    };
     if (done.isEmpty) {
       _snack('Nothing to archive yet. Finish a task first.');
       return;
@@ -393,6 +395,7 @@ class _TodoScreenState extends State<TodoScreen>
         if (!_finding) {
           _query = '';
           _show = _Show.all;
+          _sort = _Sort.manual;
         }
       });
 
@@ -426,9 +429,8 @@ class _TodoScreenState extends State<TodoScreen>
         };
     return shown
       ..sort((a, b) {
-        final c = _sort == _Sort.priority
-            ? b.priority.index.compareTo(a.priority.index)
-            : byDue(a, b);
+        final c =
+            _sort == _Sort.priority ? b.priority.index.compareTo(a.priority.index) : byDue(a, b);
         return c != 0 ? c : pos[a.id]!.compareTo(pos[b.id]!);
       });
   }
@@ -549,29 +551,34 @@ class _TodoScreenState extends State<TodoScreen>
               : todos.isEmpty
                   ? Padding(
                       padding: const EdgeInsets.all(32),
-                      child: Text(
-                        'No task matches.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 15, color: _palette.inkSoft),
+                      child: Column(
+                        children: [
+                          Text(
+                            'No task matches.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 15, color: _palette.inkSoft),
+                          ),
+                          TextButton(onPressed: _toggleFind, child: const Text('Clear search')),
+                        ],
                       ),
                     )
                   : ListView.builder(
-                  controller: _scroll,
-                  padding: EdgeInsets.only(top: 4, bottom: 170 + bottomPad),
-                  itemCount: todos.length,
-                  itemBuilder: (context, i) {
-                    final t = todos[i];
-                    return TodoTile(
-                      key: ValueKey(t.id),
-                      todo: t,
-                      textKey: _keyFor(t.id),
-                      world: _world,
-                      onToggle: () => _toggle(t),
-                      onEdit: () => _edit(t),
-                      onSwiped: (dir, v) => _swiped(t, dir, v),
-                    );
-                  },
-                ),
+                      controller: _scroll,
+                      padding: EdgeInsets.only(top: 4, bottom: 170 + bottomPad),
+                      itemCount: todos.length,
+                      itemBuilder: (context, i) {
+                        final t = todos[i];
+                        return TodoTile(
+                          key: ValueKey(t.id),
+                          todo: t,
+                          textKey: _keyFor(t.id),
+                          world: _world,
+                          onToggle: () => _toggle(t),
+                          onEdit: () => _edit(t),
+                          onSwiped: (dir, v) => _swiped(t, dir, v),
+                        );
+                      },
+                    ),
         ),
       ],
     );
@@ -670,7 +677,8 @@ class _Header extends StatelessWidget {
           IconButton(
             tooltip: finding ? 'Close search' : 'Search and sort',
             onPressed: onFind,
-            icon: Icon(finding ? Icons.search_off_rounded : Icons.search_rounded, color: palette.ink),
+            icon:
+                Icon(finding ? Icons.search_off_rounded : Icons.search_rounded, color: palette.ink),
           ),
           IconButton.filled(
             tooltip: 'Add task',
@@ -743,7 +751,15 @@ class _StrataLegend extends StatelessWidget {
   final Palette palette;
 
   static const _initials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  static const _names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  static const _names = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -891,6 +907,12 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             FilledButton(onPressed: onAdd, child: const Text('Add task')),
+            const SizedBox(height: 14),
+            Text(
+              'Long-press a task to edit · swipe to delete · shake to empty the jar',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12.5, height: 1.4, color: palette.inkSoft),
+            ),
           ],
         ),
       ),

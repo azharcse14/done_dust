@@ -31,8 +31,7 @@ class _TaskEditor extends StatefulWidget {
 }
 
 class _TaskEditorState extends State<_TaskEditor> {
-  late final TextEditingController _text =
-      TextEditingController(text: widget.editing?.text ?? '');
+  late final TextEditingController _text = TextEditingController(text: widget.editing?.text ?? '');
   late Priority _priority = widget.editing?.priority ?? Priority.normal;
   late DateTime? _due = widget.editing?.due;
 
@@ -44,9 +43,8 @@ class _TaskEditorState extends State<_TaskEditor> {
 
   /// A pasted list becomes one task per line. An edit stays one task.
   List<String> _lines(String value) {
-    final lines = widget.editing != null
-        ? [value.replaceAll(RegExp(r'\s*\n\s*'), ' ')]
-        : value.split('\n');
+    final lines =
+        widget.editing != null ? [value.replaceAll(RegExp(r'\s*\n\s*'), ' ')] : value.split('\n');
     return [
       for (final l in lines.map((l) => l.trim()))
         if (l.isNotEmpty)
@@ -118,7 +116,8 @@ class _TaskEditorState extends State<_TaskEditor> {
             onSubmitted: (_) => _submit(),
             style: taskTextStyle(color: palette.ink, priority: _priority),
             decoration: InputDecoration(
-              hintText: isEdit ? 'What needs doing?' : 'What needs doing? Paste a list to add many.',
+              hintText:
+                  isEdit ? 'What needs doing?' : 'What needs doing? Paste a list to add many.',
               filled: true,
               fillColor: palette.glass,
               border: OutlineInputBorder(
@@ -141,16 +140,27 @@ class _TaskEditorState extends State<_TaskEditor> {
           const SizedBox(height: 8),
           Text(_hint, style: TextStyle(color: palette.inkSoft, fontSize: 13)),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              if (_due == null)
+                for (final (label, days) in const [('Today', 0), ('Tomorrow', 1)])
+                  ActionChip(
+                    label: Text(label),
+                    onPressed: () {
+                      final now = DateTime.now();
+                      setState(() => _due = DateTime(now.year, now.month, now.day + days));
+                    },
+                  ),
               InputChip(
                 avatar: const Icon(Icons.event_rounded, size: 18),
-                label: Text(_due == null ? 'Add due date' : 'Due ${formatDay(_due!)}'),
+                label: Text(_due == null ? 'Pick date' : 'Due ${formatDay(_due!)}'),
                 onPressed: _pickDue,
                 onDeleted: _due == null ? null : () => setState(() => _due = null),
                 deleteButtonTooltipMessage: 'Remove due date',
               ),
-              const Spacer(),
               if (isEdit)
                 TextButton.icon(
                   onPressed: () => _submit(duplicate: true),

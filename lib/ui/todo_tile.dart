@@ -54,6 +54,7 @@ class TodoTile extends StatelessWidget {
                     child: _Check(
                       checked: todo.completed,
                       fill: checkColor,
+                      mark: palette.glass,
                       outline: palette.ink,
                       label: todo.text,
                     ),
@@ -112,12 +113,14 @@ class _Check extends StatelessWidget {
   const _Check({
     required this.checked,
     required this.fill,
+    required this.mark,
     required this.outline,
     required this.label,
   });
 
   final bool checked;
   final Color fill;
+  final Color mark;
   final Color outline;
   final String label;
 
@@ -135,9 +138,7 @@ class _Check extends StatelessWidget {
           borderRadius: BorderRadius.circular(7),
           border: Border.all(color: checked ? fill : outline.withAlpha(150), width: 1.6),
         ),
-        child: checked
-            ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
-            : null,
+        child: checked ? Icon(Icons.check_rounded, size: 16, color: mark) : null,
       ),
     );
   }

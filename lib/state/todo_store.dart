@@ -33,8 +33,7 @@ class TodoStore extends ChangeNotifier {
 
   int doneToday() {
     final now = DateTime.now();
-    bool sameDay(DateTime d) =>
-        d.year == now.year && d.month == now.month && d.day == now.day;
+    bool sameDay(DateTime d) => d.year == now.year && d.month == now.month && d.day == now.day;
     var count = 0;
     for (final t in [..._todos, ..._archived]) {
       final c = t.completedAt;
@@ -182,8 +181,19 @@ class TodoStore extends ChangeNotifier {
     _changed();
   }
 
-  void deleteArchived(int id) {
-    _archived = _archived.where((t) => t.id != id).toList();
+  (Todo, int)? deleteArchived(int id) {
+    final index = _archived.indexWhere((t) => t.id == id);
+    if (index < 0) return null;
+    final removed = _archived[index];
+    _archived = [..._archived]..removeAt(index);
+    _changed();
+    return (removed, index);
+  }
+
+  void undoDeleteArchived(Todo todo, int index) {
+    final list = [..._archived];
+    list.insert(math.min(index, list.length), todo);
+    _archived = list;
     _changed();
   }
 
@@ -232,8 +242,7 @@ class TodoStore extends ChangeNotifier {
   static List<Todo> _starterTasks() {
     final now = DateTime.now();
     var id = now.millisecondsSinceEpoch;
-    Todo t(String text, Priority p) =>
-        Todo(id: id++, text: text, priority: p, createdAt: now);
+    Todo t(String text, Priority p) => Todo(id: id++, text: text, priority: p, createdAt: now);
     return [
       t('Check me off and watch the letters fall', Priority.normal),
       t('Tilt your phone to slide the pile', Priority.low),

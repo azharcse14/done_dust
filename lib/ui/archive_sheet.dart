@@ -10,13 +10,19 @@ Future<void> showArchiveSheet(BuildContext context, TodoStore store) {
     isScrollControlled: true,
     showDragHandle: true,
     backgroundColor: Palette.of(context).surface,
-    builder: (context) => DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.6,
-      maxChildSize: 0.92,
-      builder: (context, controller) => ListenableBuilder(
-        listenable: store,
-        builder: (context, _) => _ArchiveList(store: store, controller: controller),
+    // Own messenger so the undo snackbar shows above the sheet, not under it.
+    builder: (context) => ScaffoldMessenger(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          maxChildSize: 0.92,
+          builder: (context, controller) => ListenableBuilder(
+            listenable: store,
+            builder: (context, _) => _ArchiveList(store: store, controller: controller),
+          ),
+        ),
       ),
     ),
   );
@@ -37,6 +43,19 @@ class _ArchiveListState extends State<_ArchiveList> {
 
   TodoStore get store => widget.store;
 
+  void _delete(int id) {
+    final removed = store.deleteArchived(id);
+    if (removed == null) return;
+    final (task, index) = removed;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: const Text('Deleted from archive'),
+        action:
+            SnackBarAction(label: 'Undo', onPressed: () => store.undoDeleteArchived(task, index)),
+      ));
+  }
+
   Future<void> _confirmClear(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -45,7 +64,8 @@ class _ArchiveListState extends State<_ArchiveList> {
         content: const Text('Archived tasks will be deleted for good.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Clear archive')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true), child: const Text('Clear archive')),
         ],
       ),
     );
@@ -146,12 +166,11 @@ class _ArchiveListState extends State<_ArchiveList> {
                     );
                     return Dismissible(
                       key: ValueKey(t.id),
-                      onDismissed: (_) => store.deleteArchived(t.id),
+                      onDismissed: (_) => _delete(t.id),
                       background: ColoredBox(color: Theme.of(context).colorScheme.errorContainer),
                       child: Semantics(
                         customSemanticsActions: {
-                          const CustomSemanticsAction(label: 'Delete'): () =>
-                              store.deleteArchived(t.id),
+                          const CustomSemanticsAction(label: 'Delete'): () => _delete(t.id),
                         },
                         child: tile,
                       ),
