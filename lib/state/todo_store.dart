@@ -167,12 +167,16 @@ class TodoStore extends ChangeNotifier {
     return moved;
   }
 
-  /// Undo for a shake: tasks come back still finished.
-  void unarchive(List<Todo> items) {
+  /// Undo for a shake: tasks come back still finished. Only those still in
+  /// the archive return (one may have been reopened or deleted meanwhile).
+  List<Todo> unarchive(List<Todo> items) {
     final ids = items.map((t) => t.id).toSet();
+    final back = _archived.where((t) => ids.contains(t.id)).toList();
+    if (back.isEmpty) return back;
     _archived = _archived.where((t) => !ids.contains(t.id)).toList();
-    _todos = [..._todos, ...items];
+    _todos = [..._todos, ...back];
     _changed();
+    return back;
   }
 
   /// From the archive sheet: put a task back on the list as an open task.
@@ -204,6 +208,18 @@ class TodoStore extends ChangeNotifier {
   void clearArchive() {
     _archived = [];
     _changed();
+  }
+
+  DateTime? _goalCelebrated;
+
+  /// True only the first time today's count reaches the goal, so
+  /// unchecking and rechecking a task doesn't celebrate again.
+  bool reachedGoalJustNow() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (dailyGoal == 0 || doneToday() < dailyGoal || _goalCelebrated == today) return false;
+    _goalCelebrated = today;
+    return true;
   }
 
   void setSound(bool on) {

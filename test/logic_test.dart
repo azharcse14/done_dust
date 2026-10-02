@@ -70,6 +70,35 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('todos.v2.bak'), '{not json');
     });
+
+    test('old split lists load, then save as one key', () async {
+      SharedPreferences.setMockInitialValues({
+        'todos.v2': '[{"id":1,"text":"open","createdAt":0}]',
+        'archive.v2': '[{"id":2,"text":"old","createdAt":0,"completedAt":0}]',
+      });
+      final storage = Storage();
+      final s = await storage.load();
+      expect(s.firstRun, isFalse);
+      expect(s.todos.single.text, 'open');
+      expect(s.archived.single.text, 'old');
+
+      await storage.saveTodos(s.todos, s.archived);
+      final prefs = await SharedPreferences.getInstance();
+      final saved = jsonDecode(prefs.getString('tasks.v3')!) as Map;
+      expect((saved['todos'] as List).single['text'], 'open');
+      expect((saved['archive'] as List).single['text'], 'old');
+      final again = await Storage().load();
+      expect(again.archived.single.id, 2);
+    });
+
+    test('an unreadable task store is backed up', () async {
+      SharedPreferences.setMockInitialValues({'tasks.v3': '{oops'});
+      final s = await Storage().load();
+      expect(s.todos, isEmpty);
+      expect(s.firstRun, isFalse, reason: 'a broken store must not be replaced by starter tasks');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('tasks.v3.bak'), '{oops');
+    });
   });
 
   group('TodoStore', () {
@@ -108,6 +137,37 @@ void main() {
       store.undoDelete(removed, index);
       expect(store.todos[index].id, a.id);
       expect(store.delete(-1), isNull);
+    });
+
+    test('shake undo skips tasks reopened or deleted meanwhile', () async {
+      final store = await _emptyStore();
+      final a = store.add('a', Priority.normal);
+      final b = store.add('b', Priority.normal);
+      final c = store.add('c', Priority.normal);
+      for (final t in [a, b, c]) {
+        store.setCompleted(t.id, true);
+      }
+      final moved = store.archive([a.id, b.id, c.id]);
+      store.reopenFromArchive(a.id);
+      store.deleteArchived(b.id);
+
+      final back = store.unarchive(moved);
+      expect(back.map((t) => t.id), [c.id]);
+      expect(store.todos.map((t) => t.id), [a.id, c.id], reason: 'no duplicate, b stays deleted');
+      expect(store.byId(a.id)!.completed, isFalse);
+      expect(store.archived, isEmpty);
+    });
+
+    test('daily goal celebrates once per day', () async {
+      final store = await _emptyStore();
+      final a = store.add('a', Priority.normal);
+      store.setDailyGoal(1);
+      expect(store.reachedGoalJustNow(), isFalse);
+      store.setCompleted(a.id, true);
+      expect(store.reachedGoalJustNow(), isTrue);
+      store.setCompleted(a.id, false);
+      store.setCompleted(a.id, true);
+      expect(store.reachedGoalJustNow(), isFalse);
     });
 
     test('reopen from archive', () async {
@@ -206,6 +266,22 @@ void main() {
       });
       expect(b.groupOf(1)!.particles.length, 5);
       expect(missing, {2});
+    });
+
+    test('a damaged saved group is poured fresh, not half restored', () {
+      final b = world();
+      final missing = b.restore({
+        'groups': {
+          '1': [
+            [0, 'a', 9, 14, 0.5, 10, 0],
+            [1, 'b', 'bad', 14, 0.5, 10, 0],
+          ],
+        },
+      }, {
+        1: (priority: Priority.normal, color: const Color(0xFF000000)),
+      });
+      expect(missing, {1});
+      expect(b.has(1), isFalse);
     });
 
     test('overflow throws out the oldest tasks first', () {

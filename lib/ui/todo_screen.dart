@@ -294,7 +294,7 @@ class _TodoScreenState extends State<TodoScreen>
       store.setCompleted(todo.id, true);
       if (store.todos.every((t) => t.completed)) {
         _celebrate('All done. Enjoy the quiet.');
-      } else if (store.dailyGoal > 0 && store.doneToday() == store.dailyGoal) {
+      } else if (store.reachedGoalJustNow()) {
         _celebrate('Daily goal reached: ${store.dailyGoal} done today.');
       }
     } else {
@@ -377,8 +377,7 @@ class _TodoScreenState extends State<TodoScreen>
     _snack(
       'Archived ${moved.length} ${moved.length == 1 ? 'task' : 'tasks'}',
       onUndo: () {
-        store.unarchive(moved);
-        for (final t in moved) {
+        for (final t in store.unarchive(moved)) {
           _pour(t);
         }
       },

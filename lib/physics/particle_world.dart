@@ -437,22 +437,28 @@ class ParticleWorld extends ChangeNotifier {
 
       final material = ParticleMaterial.of(task.priority);
       final particles = <Particle>[];
-      for (final row in rows) {
-        if (row is! List || row.length < 7) continue;
-        final w = (row[2] as num).toDouble();
-        final p = Particle(
-          glyph: row[1] as String,
-          index: row[0] as int,
-          x: 0,
-          y: floorY - (row[5] as num).toDouble(),
-          width: w,
-          height: (row[3] as num).toDouble(),
-          material: material,
-          tint: task.color,
-        );
-        p.x = clampD((row[4] as num).toDouble() * size.width - w / 2, left, right - w);
-        p.rot = (row[6] as num).toDouble();
-        particles.add(p);
+      try {
+        for (final row in rows) {
+          if (row is! List || row.length < 7) continue;
+          final w = (row[2] as num).toDouble();
+          final p = Particle(
+            glyph: row[1] as String,
+            index: row[0] as int,
+            x: 0,
+            y: floorY - (row[5] as num).toDouble(),
+            width: w,
+            height: (row[3] as num).toDouble(),
+            material: material,
+            tint: task.color,
+          );
+          p.x = clampD((row[4] as num).toDouble() * size.width - w / 2, left, right - w);
+          p.rot = (row[6] as num).toDouble();
+          particles.add(p);
+        }
+      } catch (_) {
+        // A damaged group stays in [missing] and is poured in fresh, rather
+        // than restored with letters missing.
+        continue;
       }
       if (particles.isEmpty) continue;
       _groups[id] = TaskParticles(

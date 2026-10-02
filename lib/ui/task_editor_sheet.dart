@@ -62,10 +62,13 @@ class _TaskEditorState extends State<_TaskEditor> {
 
   Future<void> _pickDue() async {
     final now = DateTime.now();
+    final due = _due;
+    final yearAgo = DateTime(now.year - 1);
     final picked = await showDatePicker(
       context: context,
-      initialDate: _due ?? now,
-      firstDate: DateTime(now.year - 1),
+      initialDate: due ?? now,
+      // An old overdue task must still open on its own date.
+      firstDate: due != null && due.isBefore(yearAgo) ? due : yearAgo,
       lastDate: DateTime(now.year + 5),
     );
     if (picked != null && mounted) setState(() => _due = picked);
