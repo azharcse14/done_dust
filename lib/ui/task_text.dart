@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 import '../physics/particle.dart';
@@ -149,9 +151,21 @@ class _TextPaint extends CustomPainter {
   final TextPainter painter;
   final bool hidden;
 
+  /// Faint, slightly soft print left behind once the letters have gone,
+  /// like the mark a sticker leaves on a wall.
+  static final _ghost = Paint()
+    ..color = const Color(0x2E000000)
+    ..imageFilter = ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5);
+
   @override
   void paint(Canvas canvas, Size size) {
-    if (!hidden) painter.paint(canvas, Offset.zero);
+    if (!hidden) {
+      painter.paint(canvas, Offset.zero);
+      return;
+    }
+    canvas.saveLayer(Offset.zero & size, _ghost);
+    painter.paint(canvas, Offset.zero);
+    canvas.restore();
   }
 
   @override
