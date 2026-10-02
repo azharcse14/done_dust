@@ -87,14 +87,21 @@ class _SettingsState extends State<_Settings> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              s.settings,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                fontVariations: const [FontVariation('wght', 700)],
-                color: palette.ink,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    s.settings,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      fontVariations: const [FontVariation('wght', 700)],
+                      color: palette.ink,
+                    ),
+                  ),
+                ),
+                const CloseButton(),
+              ],
             ),
             const SizedBox(height: 8),
             SwitchListTile(
